@@ -1,10 +1,8 @@
 const request = require("supertest");
-const app = require("../src/app");
-const connectDB = require("../src/db/db");
+const app = require("../../src/app");
+const connectDB = require("../../src/db/db");
 
-// Ensure the server doesn't start; we use app directly
-
-describe("POST /auth/register", () => {
+describe("POST /api/auth/register", () => {
   beforeAll(async () => {
     // connectDB uses process.env.MONGO_URI set in setup.js
     await connectDB();

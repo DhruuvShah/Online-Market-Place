@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +19,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
+    "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.0"
   },

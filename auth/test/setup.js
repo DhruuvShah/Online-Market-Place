@@ -8,7 +8,8 @@ beforeAll(async () => {
   mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri();
 
-  process.env.MONGO_URI = uri; // ensure app's db connector uses this
+  process.env.MONGO_URI = uri;
+  process.env.JWT_SECRET = "test_jwt_secret";
 
   await mongoose.connect(uri);
 });
