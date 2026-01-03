@@ -4,6 +4,6 @@ const connectDB = require("./src/db/db");
 
 connectDB();
 
-app.listen(3000, () => {
-  console.log("Auth service is listening on port 3000");
+app.listen(3001, () => {
+  console.log("Product service is listening on port 3001");
 });
