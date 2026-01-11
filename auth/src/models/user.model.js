@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 const addressSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    auto: true,
+  },
   street: String,
   city: String,
   state: String,
@@ -9,33 +13,43 @@ const addressSchema = new mongoose.Schema({
   isDefault: { type: Boolean, default: false },
 });
 
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    uniquie: true,
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
+    fullName: {
+      firstName: { type: String, required: true },
+      lastName: { type: String, required: true },
+    },
+    role: {
+      type: String,
+      enum: ["user", "seller"],
+      default: "user",
+    },
+    addresses: {
+      type: [addressSchema],
+      default: [],
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    uniquie: true,
-  },
-  password: {
-    type: String,
-    select: false,
-  },
-  fullName: {
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-  },
-  role: {
-    type: String,
-    enum: ["user", "seller"],
-    default: "user",
-  },
-  addresses: [addressSchema],
-});
+  { timestamps: true }
+);
 
-const userModel = mongoose.model("user", userSchema);
+const User = mongoose.model("User", userSchema);
 
-module.exports = userModel;
+module.exports = User;
