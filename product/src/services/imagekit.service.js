@@ -1,4 +1,5 @@
-const ImageKit = require("imagekit");
+require("dotenv").config();
+const ImageKit = require("@imagekit/nodejs");
 const { v4: uuidv4 } = require("uuid");
 
 let imagekitInstance = null;
@@ -6,8 +7,9 @@ let imagekitInstance = null;
 function getImageKit() {
   if (imagekitInstance) return imagekitInstance;
 
-  const { IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT } =
-    process.env;
+  const IMAGEKIT_PUBLIC_KEY = process.env.IMAGEKIT_PUBLIC_KEY ? process.env.IMAGEKIT_PUBLIC_KEY.trim() : "";
+  const IMAGEKIT_PRIVATE_KEY = process.env.IMAGEKIT_PRIVATE_KEY ? process.env.IMAGEKIT_PRIVATE_KEY.trim() : "";
+  const IMAGEKIT_URL_ENDPOINT = process.env.IMAGEKIT_URL_ENDPOINT ? process.env.IMAGEKIT_URL_ENDPOINT.trim() : "";
 
   // ✅ If ImageKit config is missing/invalid → DO NOT crash app
   if (!IMAGEKIT_PUBLIC_KEY || !IMAGEKIT_PRIVATE_KEY || !IMAGEKIT_URL_ENDPOINT) {
@@ -17,10 +19,11 @@ function getImageKit() {
 
   try {
     imagekitInstance = new ImageKit({
-      publicKey: IMAGEKIT_PUBLIC_KEY.trim(),
-      privateKey: IMAGEKIT_PRIVATE_KEY.trim(),
-      urlEndpoint: IMAGEKIT_URL_ENDPOINT.trim(),
+      publicKey: IMAGEKIT_PUBLIC_KEY,
+      privateKey: IMAGEKIT_PRIVATE_KEY,
+      urlEndpoint: IMAGEKIT_URL_ENDPOINT,
     });
+    console.log("✅ ImageKit initialized successfully");
     return imagekitInstance;
   } catch (err) {
     console.error("ImageKit init failed:", err.message);
@@ -29,6 +32,7 @@ function getImageKit() {
 }
 
 async function uploadImage({ buffer, filename }) {
+  console.log("Uploading image:", filename);
   const imagekit = getImageKit();
 
   // ✅ Fallback mode (dev / test / broken ImageKit)
@@ -40,11 +44,16 @@ async function uploadImage({ buffer, filename }) {
     };
   }
 
-  const res = await imagekit.upload({
-    file: buffer,
+  // Convert buffer to base64 string for the new SDK
+  const base64File = buffer.toString('base64');
+
+  // New SDK uses client.files.upload() method
+  const res = await imagekit.files.upload({
+    file: base64File,
     fileName: filename || uuidv4(),
   });
 
+  console.log("Upload successful:", res.fileId);
   return {
     id: res.fileId,
     url: res.url,
