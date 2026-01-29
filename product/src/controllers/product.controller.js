@@ -27,7 +27,7 @@ async function createProduct(req, res) {
             console.error("Image upload failed:", err.message);
             return null;
           }
-        })
+        }),
       );
 
       images = images.filter(Boolean);

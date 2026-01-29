@@ -14,7 +14,7 @@ router.post(
   createAuthMiddleware(["admin", "seller"]),
   upload.array("images", 5),
   createProductValidators,
-  productController.createProduct
+  productController.createProduct,
 );
 
 // GET /api/products
@@ -23,18 +23,18 @@ router.get("/", productController.getProducts);
 router.patch(
   "/:id",
   createAuthMiddleware(["seller"]),
-  productController.updateProduct
+  productController.updateProduct,
 );
 router.delete(
   "/:id",
   createAuthMiddleware(["seller"]),
-  productController.deleteProduct
+  productController.deleteProduct,
 );
 
 router.get(
   "/seller",
   createAuthMiddleware(["seller"]),
-  productController.getProductsBySeller
+  productController.getProductsBySeller,
 );
 
 // GET /api/products/:id
