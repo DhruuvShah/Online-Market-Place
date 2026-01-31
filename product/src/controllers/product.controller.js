@@ -112,21 +112,26 @@ async function updateProduct(req, res) {
     return res.status(400).json({ message: "Invalid product id" });
   }
 
+  // FIX 1: Find by ID only. Do not filter by seller here.
   const product = await productModel.findOne({
     _id: id,
   });
 
+  // FIX 2: Check if product exists
   if (!product) {
     return res.status(404).json({ message: "Product not found" });
   }
 
+  // FIX 3: Now check if the current user owns it
   if (product.seller.toString() !== req.user.id) {
     return res
       .status(403)
       .json({ message: "Forbidden: You can only update your own products" });
   }
 
+  // Validations passed. Proceed with updates.
   const allowedUpdates = ["title", "description", "price"];
+
   for (const key of Object.keys(req.body)) {
     if (allowedUpdates.includes(key)) {
       if (key === "price" && typeof req.body.price === "object") {
@@ -141,6 +146,7 @@ async function updateProduct(req, res) {
       }
     }
   }
+
   await product.save();
   return res.status(200).json({ message: "Product updated", product });
 }
