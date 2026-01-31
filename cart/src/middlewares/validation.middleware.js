@@ -23,13 +23,13 @@ const validateAddItemToCart = [
 
 const validateUpdateCartItem = [
   param("productId")
-    .isString()
-    .withMessage("Product ID must be a string")
-    .custom((value) => mongoose.Types.ObjectId.isValid(value))
-    .withMessage("Invalid Product ID format"),
+  .isString()
+  .withMessage("Product ID must be a string")
+  .custom((value) => mongoose.Types.ObjectId.isValid(value))
+  .withMessage("Invalid Product ID format"),
   body("qty")
-    .isInt({ gt: 0 })
-    .withMessage("Quantity must be a positive integer"),
+  .isInt({ gt: 0 })
+  .withMessage("Quantity must be a positive integer"),
   validateResult,
 ];
 
