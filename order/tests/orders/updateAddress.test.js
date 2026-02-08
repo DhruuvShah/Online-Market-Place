@@ -28,12 +28,12 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
         {
           product: "507f1f77bcf86cd799439021",
           quantity: 1,
-          price: { amount: 100, currency: "USD" },
+          price: { amount: 0, currency: "USD" },
         },
       ],
       status: "PENDING",
       totalPrice: {
-        amount: 100,
+        amount: 0,
         currency: "USD",
       },
       shippingAddress: {
@@ -71,12 +71,12 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
         {
           product: "507f1f77bcf86cd799439021",
           quantity: 1,
-          price: { amount: 100, currency: "USD" },
+          price: { amount: 0, currency: "USD" },
         },
       ],
       status: "SHIPPED",
       totalPrice: {
-        amount: 100,
+        amount: 0,
         currency: "USD",
       },
       shippingAddress: {
@@ -106,12 +106,12 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
         {
           product: "507f1f77bcf86cd799439021",
           quantity: 1,
-          price: { amount: 100, currency: "USD" },
+          price: { amount: 0, currency: "USD" },
         },
       ],
       status: "PENDING",
       totalPrice: {
-        amount: 100,
+        amount: 0,
         currency: "USD",
       },
       shippingAddress: {

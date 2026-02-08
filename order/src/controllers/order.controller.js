@@ -57,7 +57,7 @@ async function createOrder(req, res) {
 
     const order = await orderModel.create({
       user: user.id,
-      items: orderItems, 
+      items: orderItems,
       status: "PENDING",
       totalPrice: {
         amount: priceAmount,
