@@ -5,15 +5,17 @@ const orderModel = require("../../src/models/order.model");
 
 describe("POST /api/orders/:id/cancel — Buyer-initiated cancel while rules apply", () => {
   const orderId = "507f1f77bcf86cd799439012";
+  const defaultUserId = "68bc6369c17579622cbdd9fe";
 
   beforeEach(async () => {
+    // Clean up before each test
     await orderModel.deleteMany({});
   });
 
   it("cancels a PENDING order and returns updated order", async () => {
     const order = new orderModel({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe", // ensure this matches auth user
+      user: defaultUserId, // matches auth user from getAuthCookie
       status: "PENDING",
       items: [
         {
@@ -46,7 +48,7 @@ describe("POST /api/orders/:id/cancel — Buyer-initiated cancel while rules app
   it("returns 409 when order is not cancellable (e.g., SHIPPED or DELIVERED)", async () => {
     const order = new orderModel({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe", // ensure this matches auth user
+      user: defaultUserId, // matches auth user from getAuthCookie
       status: "SHIPPED",
       items: [
         {
@@ -78,11 +80,17 @@ describe("POST /api/orders/:id/cancel — Buyer-initiated cancel while rules app
   it("returns 403 when user is not the owner of the order", async () => {
     const order = new orderModel({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe",
-      items: [],
+      user: defaultUserId, // different from the user in the cookie below
+      items: [
+        {
+          product: "507f1f77bcf86cd799439021",
+          quantity: 1,
+          price: { amount: 100, currency: "USD" },
+        },
+      ],
       status: "PENDING",
       totalPrice: {
-        amount: 0,
+        amount: 100,
         currency: "USD",
       },
       shippingAddress: {
@@ -96,6 +104,7 @@ describe("POST /api/orders/:id/cancel — Buyer-initiated cancel while rules app
 
     await order.save();
 
+    // Use a different userId to test authorization
     const res = await request(app)
       .post(`/api/orders/${orderId}/cancel`)
       .set("Cookie", getAuthCookie({ userId: "507f1f77bcf86cd799439099" }))

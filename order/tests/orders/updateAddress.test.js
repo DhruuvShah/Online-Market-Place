@@ -5,6 +5,7 @@ const orderModel = require("../../src/models/order.model");
 
 describe("PATCH /api/orders/:id/address — Update delivery address prior to payment capture", () => {
   const orderId = "507f1f77bcf86cd799439012";
+  const defaultUserId = "68bc6369c17579622cbdd9fe";
 
   const newAddress = {
     street: "456 Second St",
@@ -14,14 +15,25 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
     country: "USA",
   };
 
+  beforeEach(async () => {
+    // Clean up before each test
+    await orderModel.deleteMany({});
+  });
+
   it("updates shipping address and returns updated order", async () => {
     const order = await orderModel.create({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe",
-      items: [],
+      user: defaultUserId, // matches auth user from getAuthCookie
+      items: [
+        {
+          product: "507f1f77bcf86cd799439021",
+          quantity: 1,
+          price: { amount: 100, currency: "USD" },
+        },
+      ],
       status: "PENDING",
       totalPrice: {
-        amount: 0,
+        amount: 100,
         currency: "USD",
       },
       shippingAddress: {
@@ -54,11 +66,17 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
   it("returns 409 when address update is not allowed (e.g., after capture/shipping)", async () => {
     const order = await orderModel.create({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe",
-      items: [],
+      user: defaultUserId, // matches auth user from getAuthCookie
+      items: [
+        {
+          product: "507f1f77bcf86cd799439021",
+          quantity: 1,
+          price: { amount: 100, currency: "USD" },
+        },
+      ],
       status: "SHIPPED",
       totalPrice: {
-        amount: 0,
+        amount: 100,
         currency: "USD",
       },
       shippingAddress: {
@@ -83,17 +101,24 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
   it("returns 400 when address is invalid", async () => {
     const order = await orderModel.create({
       _id: orderId,
-      user: "68bc6369c17579622cbdd9fe",
-      items: [],
+      user: defaultUserId, // matches auth user from getAuthCookie
+      items: [
+        {
+          product: "507f1f77bcf86cd799439021",
+          quantity: 1,
+          price: { amount: 100, currency: "USD" },
+        },
+      ],
       status: "PENDING",
       totalPrice: {
-        amount: 0,
+        amount: 100,
         currency: "USD",
       },
       shippingAddress: {
         street: "123 Main St",
         city: "Metropolis",
         state: "NY",
+        zip: "10001",
         country: "USA",
       },
     });
@@ -101,7 +126,7 @@ describe("PATCH /api/orders/:id/address — Update delivery address prior to pay
     const res = await request(app)
       .patch(`/api/orders/${orderId}/address`)
       .set("Cookie", getAuthCookie())
-      .send({ shippingAddress: { city: "Nowhere" } })
+      .send({ shippingAddress: { city: "Nowhere" } }) // Missing required fields
       .expect("Content-Type", /json/)
       .expect(400);
 

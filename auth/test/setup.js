@@ -12,17 +12,23 @@ beforeAll(async () => {
   process.env.JWT_SECRET = "test_jwt_secret";
 
   await mongoose.connect(uri);
-});
+}, 30000); // Increase timeout to 30 seconds
 
 afterEach(async () => {
   // Cleanup all collections between tests
-  const collections = await mongoose.connection.db.collections();
-  for (let collection of collections) {
-    await collection.deleteMany({});
+  if (mongoose.connection.db) {
+    const collections = await mongoose.connection.db.collections();
+    for (let collection of collections) {
+      await collection.deleteMany({});
+    }
   }
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
-  if (mongo) await mongo.stop();
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.close();
+  }
+  if (mongo) {
+    await mongo.stop();
+  }
 });

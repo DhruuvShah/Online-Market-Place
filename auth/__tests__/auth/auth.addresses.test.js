@@ -2,13 +2,10 @@ const request = require("supertest");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const app = require("../../src/app");
-const connectDB = require("../../src/db/db");
 const userModel = require("../../src/models/user.model");
 
 describe("User addresses API", () => {
-  beforeAll(async () => {
-    await connectDB();
-  });
+  // Remove the connectDB call - let setup.js handle it
 
   async function seedUserAndLogin({
     username = "addr_user",
@@ -62,7 +59,7 @@ describe("User addresses API", () => {
           state: "SP",
           zip: "49007",
           country: "USA",
-        }
+        },
       );
       await user.save();
 
@@ -77,7 +74,7 @@ describe("User addresses API", () => {
       // or mark one of the addresses with isDefault
       expect(
         "defaultAddressId" in res.body ||
-          res.body.addresses.some((a) => a.isDefault === true)
+          res.body.addresses.some((a) => a.isDefault === true),
       ).toBe(true);
     });
   });
@@ -128,7 +125,8 @@ describe("User addresses API", () => {
       expect(addr.street).toBe("1600 Amphitheatre Pkwy");
       // default marking can be communicated either by isDefault flag or separate default id
       expect(
-        addr.isDefault === true || typeof res.body.defaultAddressId === "string"
+        addr.isDefault === true ||
+          typeof res.body.defaultAddressId === "string",
       ).toBe(true);
     });
   });
@@ -142,7 +140,7 @@ describe("User addresses API", () => {
 
       user.addresses.push(
         { street: "A St", city: "X", state: "X", zip: "11111", country: "US" },
-        { street: "B St", city: "Y", state: "Y", zip: "22222", country: "US" }
+        { street: "B St", city: "Y", state: "Y", zip: "22222", country: "US" },
       );
       await user.save();
 
@@ -155,7 +153,7 @@ describe("User addresses API", () => {
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body.addresses)).toBe(true);
       expect(
-        res.body.addresses.find((a) => a._id === idToDelete)
+        res.body.addresses.find((a) => a._id === idToDelete),
       ).toBeUndefined();
     });
 

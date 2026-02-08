@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 // Returns an array suitable for Supertest's .set('Cookie', ...)
 // Default cookie name is 'token'; adjust if your app expects a different name.
 function getAuthCookie({
-  userId = "697dc096a413f13d1beeb4ae",
+  userId = "68bc6369c17579622cbdd9fe", // Match the default user ID in tests
   extra = { role: "user" },
 } = {}) {
   const secret = process.env.JWT_SECRET || "test-secret";
