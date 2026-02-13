@@ -13,12 +13,16 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "axios": "^1.13.4",
+    "@langchain/core": "^1.1.24",
+    "@langchain/google-genai": "^2.1.18",
+    "@langchain/langgraph": "^1.1.4",
+    "axios": "^1.13.5",
     "cookie": "^1.1.1",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.6",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "zod": "^4.3.6"
   }
 }
