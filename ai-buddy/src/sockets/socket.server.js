@@ -2,6 +2,7 @@ const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const cookie = require("cookie");
 const agent = require("../agent/agent");
+const { da } = require("zod/locales");
 
 async function initSocketServer(httpServer) {
   const io = new Server(httpServer, {});
@@ -45,6 +46,7 @@ async function initSocketServer(httpServer) {
             token: socket.token,
           },
         },
+        
       );
 
       const lastMessage =
