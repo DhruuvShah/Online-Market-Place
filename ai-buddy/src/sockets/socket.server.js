@@ -46,11 +46,12 @@ async function initSocketServer(httpServer) {
             token: socket.token,
           },
         },
-        
       );
 
       const lastMessage =
         agentResponse.messages[agentResponse.messages.length - 1];
+
+      console.log("Emitting message to client:", lastMessage.content);
 
       socket.emit("message", lastMessage.content);
     });

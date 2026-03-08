@@ -8,9 +8,11 @@ const {
 const tools = require("./tools");
 
 const model = new ChatGoogleGenerativeAI({
-  model: "gemini-2.0-flash-lite",
+  model: "gemini-3-flash-preview",
   temperature: 0.5,
 });
+
+console.log("Initializing agent with model:", model);
 
 const graph = new StateGraph(MessagesAnnotation)
   .addNode("tools", async (state, config) => {

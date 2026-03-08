@@ -15,6 +15,7 @@ const searchProduct = tool(
       },
     );
 
+    console.log("searchProduct response:", response.data);
     return JSON.stringify(response.data);
   },
   {
