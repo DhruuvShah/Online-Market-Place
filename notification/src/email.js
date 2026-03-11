@@ -38,11 +38,4 @@ const sendEmail = async (to, subject, text, html) => {
   }
 };
 
-sendEmail(
-  "codeprime63@gmail.com",
-  "Test Email",
-  "This is a test email from Node.js",
-  "<b>This is a test email from Node.js</b>",
-);
-
-module.exports = sendEmail;
+module.exports = {sendEmail};

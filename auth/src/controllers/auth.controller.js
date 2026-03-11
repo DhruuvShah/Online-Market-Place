@@ -2,6 +2,7 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const redis = require("../db/redis");
+const { publishToQueue } = require("../broker/broker");
 
 async function registerUser(req, res) {
   try {
@@ -33,6 +34,14 @@ async function registerUser(req, res) {
       role: role || "user",
     });
 
+    await publishToQueue("AUTH_NOTIFICATION.USER_CREATED", {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      fullName: user.fullName,
+      order
+    });
+
     const token = jwt.sign(
       {
         id: user._id,
@@ -41,7 +50,7 @@ async function registerUser(req, res) {
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     res.cookie("token", token, {
@@ -92,7 +101,7 @@ async function loginUser(req, res) {
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     res.cookie("token", token, {
@@ -174,7 +183,7 @@ async function addUserAddress(req, res) {
         },
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!user) {
@@ -207,7 +216,7 @@ async function deleteUserAddress(req, res) {
         addresses: { _id: addressId },
       },
     },
-    { new: true }
+    { new: true },
   );
 
   if (!user) {
@@ -215,7 +224,7 @@ async function deleteUserAddress(req, res) {
   }
 
   const addressExists = user.addresses.some(
-    (addr) => addr._id.toString() === addressId
+    (addr) => addr._id.toString() === addressId,
   );
   if (addressExists) {
     return res.status(500).json({ message: "Failed to delete address" });
