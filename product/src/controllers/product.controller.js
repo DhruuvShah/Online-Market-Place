@@ -1,5 +1,6 @@
 const productModel = require("../models/product.model");
 const { uploadImage } = require("../services/imagekit.service");
+const { publishToQueue } = require("../broker/broker");
 const mongoose = require("mongoose");
 
 // Accepts multipart/form-data with fields: title, description, priceAmount, priceCurrency, images[] (files)
@@ -41,12 +42,12 @@ async function createProduct(req, res) {
       images,
     });
 
-    // await publishToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
-    // await publishToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
-    //   email: req.user.email,
-    //   productId: product._id,
-    //   sellerId: seller,
-    // });
+    await publishToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
+    await publishToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
+      email: req.user.email,
+      productId: product._id,
+      sellerId: seller,
+    });
 
     return res.status(201).json({
       message: "Product created",
