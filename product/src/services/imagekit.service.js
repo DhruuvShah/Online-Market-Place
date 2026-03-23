@@ -7,9 +7,15 @@ let imagekitInstance = null;
 function getImageKit() {
   if (imagekitInstance) return imagekitInstance;
 
-  const IMAGEKIT_PUBLIC_KEY = process.env.IMAGEKIT_PUBLIC_KEY ? process.env.IMAGEKIT_PUBLIC_KEY.trim() : "";
-  const IMAGEKIT_PRIVATE_KEY = process.env.IMAGEKIT_PRIVATE_KEY ? process.env.IMAGEKIT_PRIVATE_KEY.trim() : "";
-  const IMAGEKIT_URL_ENDPOINT = process.env.IMAGEKIT_URL_ENDPOINT ? process.env.IMAGEKIT_URL_ENDPOINT.trim() : "";
+  const IMAGEKIT_PUBLIC_KEY = process.env.IMAGEKIT_PUBLIC_KEY
+    ? process.env.IMAGEKIT_PUBLIC_KEY.trim()
+    : "";
+  const IMAGEKIT_PRIVATE_KEY = process.env.IMAGEKIT_PRIVATE_KEY
+    ? process.env.IMAGEKIT_PRIVATE_KEY.trim()
+    : "";
+  const IMAGEKIT_URL_ENDPOINT = process.env.IMAGEKIT_URL_ENDPOINT
+    ? process.env.IMAGEKIT_URL_ENDPOINT.trim()
+    : "";
 
   // ✅ If ImageKit config is missing/invalid → DO NOT crash app
   if (!IMAGEKIT_PUBLIC_KEY || !IMAGEKIT_PRIVATE_KEY || !IMAGEKIT_URL_ENDPOINT) {
@@ -45,7 +51,7 @@ async function uploadImage({ buffer, filename }) {
   }
 
   // Convert buffer to base64 string for the new SDK
-  const base64File = buffer.toString('base64');
+  const base64File = buffer.toString("base64");
 
   // New SDK uses client.files.upload() method
   const res = await imagekit.files.upload({

@@ -7,7 +7,7 @@ const searchProduct = tool(
     console.log("searchProduct called with data:", { query, token });
 
     const response = await axios.get(
-      `http://localhost:3001/api/products?q=${query}`,
+      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/products?q=${query}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -30,7 +30,7 @@ const searchProduct = tool(
 const addProductToCart = tool(
   async ({ productId, qty = 1, token }) => {
     const response = await axios.post(
-      `http://localhost:3002/api/cart/items`,
+      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/cart/items`,
       {
         productId,
         qty,

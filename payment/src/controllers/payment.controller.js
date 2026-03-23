@@ -16,7 +16,8 @@ async function createaPayment(req, res) {
   try {
     const orderId = req.params.orderId;
     const orderResponse = await axios.get(
-      `http://localhost:3003/api/orders/` + orderId,
+      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/orders/` +
+        orderId,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -52,7 +53,10 @@ async function createaPayment(req, res) {
       payment,
     });
   } catch (error) {
-    console.error("createaPayment error:", error.response?.data || error.message || error);
+    console.error(
+      "createaPayment error:",
+      error.response?.data || error.message || error,
+    );
     const status = error.response?.status || 500;
     const body = error.response?.data || { message: "Internal Server Error" };
     return res.status(status).json(body);
