@@ -1,12 +1,18 @@
 const productModel = require("../models/product.model");
 const { uploadImage } = require("../services/imagekit.service");
-const { publishToQueue } = require("../broker/broker");
+const { publishToOutbox } = require("../broker/outbox");
 const mongoose = require("mongoose");
 
 // Accepts multipart/form-data with fields: title, description, priceAmount, priceCurrency, images[] (files)
 async function createProduct(req, res) {
   try {
-    const { title, description, priceAmount, priceCurrency = "INR" } = req.body;
+    const {
+      title,
+      description,
+      priceAmount,
+      priceCurrency = "INR",
+      stock,
+    } = req.body;
     const seller = req.user.id; // Extract seller from authenticated user
 
     const price = {
@@ -40,11 +46,13 @@ async function createProduct(req, res) {
       price,
       seller,
       images,
+      stock: stock === undefined ? 0 : Number(stock),
     });
 
-    await publishToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
-    await publishToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
+    await publishToOutbox("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
+    await publishToOutbox("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
       email: req.user.email,
+      username: req.user.username,
       productId: product._id,
       sellerId: seller,
     });
@@ -60,9 +68,20 @@ async function createProduct(req, res) {
 }
 
 async function getProducts(req, res) {
-  const { q, minprice, maxprice, skip = 0, limit = 20 } = req.query;
+  const { q, minprice, maxprice, ids, skip = 0, limit = 20 } = req.query;
 
   const filter = {};
+
+  const requestedIds = ids
+    ? ids.split(",").filter((id) => mongoose.Types.ObjectId.isValid(id))
+    : null;
+
+  if (requestedIds) {
+    if (!requestedIds.length) {
+      return res.status(200).json({ data: [] });
+    }
+    filter._id = { $in: requestedIds };
+  }
 
   if (q) {
     filter.$text = { $search: q };
@@ -85,7 +104,7 @@ async function getProducts(req, res) {
   const products = await productModel
     .find(filter)
     .skip(Number(skip))
-    .limit(Math.min(Number(limit), 20));
+    .limit(requestedIds ? requestedIds.length : Math.min(Number(limit), 20));
 
   return res.status(200).json({ data: products });
 }
@@ -131,7 +150,7 @@ async function updateProduct(req, res) {
   }
 
   // Validations passed. Proceed with updates.
-  const allowedUpdates = ["title", "description", "price"];
+  const allowedUpdates = ["title", "description", "price", "stock"];
 
   for (const key of Object.keys(req.body)) {
     if (allowedUpdates.includes(key)) {
@@ -142,6 +161,8 @@ async function updateProduct(req, res) {
         if (req.body.price.currency !== undefined) {
           product.price.currency = req.body.price.currency;
         }
+      } else if (key === "stock") {
+        product.stock = Number(req.body.stock);
       } else {
         product[key] = req.body[key];
       }
@@ -190,6 +211,64 @@ async function getProductsBySeller(req, res) {
   return res.status(200).json({ data: products });
 }
 
+async function reserveStock(req, res) {
+  const { items } = req.body;
+
+  const reserved = [];
+
+  try {
+    for (const item of items) {
+      const updated = await productModel.findOneAndUpdate(
+        { _id: item.productId, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true },
+      );
+
+      if (!updated) {
+        return await rollbackReservation(reserved, res, item.productId);
+      }
+
+      reserved.push(item);
+    }
+
+    return res.status(200).json({ message: "Stock reserved" });
+  } catch (err) {
+    console.error("Reserve stock error", err);
+    return await rollbackReservation(reserved, res);
+  }
+}
+
+async function rollbackReservation(reserved, res, productId) {
+  await Promise.all(
+    reserved.map((item) =>
+      productModel.updateOne(
+        { _id: item.productId },
+        { $inc: { stock: item.quantity } },
+      ),
+    ),
+  );
+
+  return res.status(409).json({
+    message: "Insufficient stock",
+    productId,
+  });
+}
+
+async function releaseStock(req, res) {
+  const { items } = req.body;
+
+  await Promise.all(
+    items.map((item) =>
+      productModel.updateOne(
+        { _id: item.productId },
+        { $inc: { stock: item.quantity } },
+      ),
+    ),
+  );
+
+  return res.status(200).json({ message: "Stock released" });
+}
+
 module.exports = {
   createProduct,
   getProducts,
@@ -197,4 +276,6 @@ module.exports = {
   updateProduct,
   deleteProduct,
   getProductsBySeller,
+  reserveStock,
+  releaseStock,
 };

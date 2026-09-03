@@ -9,10 +9,17 @@ require("dotenv").config();
 const app = require("./src/app");
 const connectDB = require("./src/db/db");
 const { connect } = require("./src/broker/broker");
+const { startOutboxDrain } = require("./src/broker/outbox");
+const attachShutdown = require("./src/shutdown");
 
 connectDB();
 connect();
+startOutboxDrain();
 
-app.listen(3001, () => {
-  console.log("Product service is listening on port 3001");
+const server = app.listen(process.env.PORT || 3001, () => {
+  console.log(
+    `Product service is listening on port ${process.env.PORT || 3001}`,
+  );
 });
+
+attachShutdown(server);

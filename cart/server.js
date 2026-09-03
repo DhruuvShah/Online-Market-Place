@@ -9,9 +9,12 @@ require("dotenv").config();
 const app = require("./src/app");
 
 const connectDB = require("./src/db/db");
+const attachShutdown = require("./src/shutdown");
 
 connectDB();
 
-app.listen(3002, () => {
-  console.log("Cart service is running on port 3002");
+const server = app.listen(process.env.PORT || 3002, () => {
+  console.log(`Cart service is running on port ${process.env.PORT || 3002}`);
 });
+
+attachShutdown(server);

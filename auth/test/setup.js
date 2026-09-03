@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 
+jest.mock("../src/broker/broker", () => ({
+  connect: jest.fn(async () => ({})),
+  publishToQueue: jest.fn(async () => true),
+  subscribeToQueue: jest.fn(async () => true),
+}));
+
 let mongo;
 
 beforeAll(async () => {

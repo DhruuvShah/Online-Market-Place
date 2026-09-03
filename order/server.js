@@ -9,10 +9,18 @@ require("dotenv").config();
 const app = require("./src/app");
 const connectDB = require("./src/db/db");
 const { connect } = require("./src/broker/broker");
+const { startOutboxDrain } = require("./src/broker/outbox");
+const listener = require("./src/broker/listener");
+const attachShutdown = require("./src/shutdown");
 
 connectDB();
-connect();
-
-app.listen(3003, () => {
-  console.log("Order service is running on port 3003");
+connect().then(() => {
+  listener();
 });
+startOutboxDrain();
+
+const server = app.listen(process.env.PORT || 3003, () => {
+  console.log(`Order service is running on port ${process.env.PORT || 3003}`);
+});
+
+attachShutdown(server);

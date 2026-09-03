@@ -2,11 +2,30 @@ const express = require("express");
 const multer = require("multer");
 const productController = require("../controllers/product.controller");
 const createAuthMiddleware = require("../middleware/auth.middleware");
-const { createProductValidators } = require("../validators/product.validators");
+const internalAuthMiddleware = require("../middleware/internal.middleware");
+const {
+  createProductValidators,
+  updateProductValidators,
+  stockChangeValidators,
+} = require("../validators/product.validators");
 
 const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+router.post(
+  "/internal/stock/reserve",
+  internalAuthMiddleware,
+  stockChangeValidators,
+  productController.reserveStock,
+);
+
+router.post(
+  "/internal/stock/release",
+  internalAuthMiddleware,
+  stockChangeValidators,
+  productController.releaseStock,
+);
 
 // POST /api/products
 router.post(
@@ -23,6 +42,7 @@ router.get("/", productController.getProducts);
 router.patch(
   "/:id",
   createAuthMiddleware(["seller"]),
+  updateProductValidators,
   productController.updateProduct,
 );
 router.delete(

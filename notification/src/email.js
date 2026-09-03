@@ -1,41 +1,33 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: process.env.EMAIL_USER,
-    clientId: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    refreshToken: process.env.REFRESH_TOKEN,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verify the connection configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("Error connecting to email server:", error);
-  } else {
-    console.log("Email server is ready to send messages");
-  }
-});
+const EMAIL_FROM = process.env.EMAIL_FROM || "HiveMind <onboarding@resend.dev>";
 
-// Function to send email
 const sendEmail = async (to, subject, text, html) => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`RESEND_API_KEY is not set, skipping email to ${to}`);
+    return;
+  }
+
   try {
-    const info = await transporter.sendMail({
-      from: `"Your Name" <${process.env.EMAIL_USER}>`, // sender address
-      to, // list of receivers
-      subject, // Subject line
-      text, // plain text body
-      html, // html body
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject,
+      text,
+      html,
     });
 
-    console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    if (error) {
+      console.error(`Failed to send "${subject}" to ${to}:`, error.message);
+      return;
+    }
+
+    console.log(`Email sent to ${to} (${data.id})`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error(`Failed to send "${subject}" to ${to}:`, error.message);
   }
 };
 
-module.exports = {sendEmail};
+module.exports = { sendEmail };

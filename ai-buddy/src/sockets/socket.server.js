@@ -2,11 +2,14 @@ const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const cookie = require("cookie");
 const agent = require("../agent/agent");
-const { da } = require("zod/locales");
 
 async function initSocketServer(httpServer) {
   const io = new Server(httpServer, {
     path: "/api/socket/socket.io/",
+    cors: {
+      origin: (process.env.CORS_ORIGIN || "http://localhost:5173").split(","),
+      credentials: true,
+    },
   });
 
   io.use((socket, next) => {

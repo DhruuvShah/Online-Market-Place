@@ -1,0 +1,131 @@
+name: hivemind
+
+x-service-urls: &service-urls
+  AUTH_SERVICE_URL: http://auth:3000
+  PRODUCT_SERVICE_URL: http://product:3001
+  CART_SERVICE_URL: http://cart:3002
+  ORDER_SERVICE_URL: http://order:3003
+  PAYMENT_SERVICE_URL: http://payment:3004
+  AI_BUDDY_SERVICE_URL: http://ai-buddy:3005
+  SELLER_DASHBOARD_SERVICE_URL: http://seller-dashboard:3007
+
+services:
+  auth:
+    build: ./auth
+    env_file:
+      - path: ./auth/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  product:
+    build: ./product
+    env_file:
+      - path: ./product/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  cart:
+    build: ./cart
+    env_file:
+      - path: ./cart/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3002
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  order:
+    build: ./order
+    env_file:
+      - path: ./order/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3003
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+
+  payment:
+    build: ./payment
+    env_file:
+      - path: ./payment/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3004
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+
+  ai-buddy:
+    build: ./ai-buddy
+    env_file:
+      - path: ./ai-buddy/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3005
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3005:3005"
+    restart: unless-stopped
+
+  notification:
+    build: ./notification
+    env_file:
+      - path: ./notification/.env
+        required: false
+    environment:
+      PORT: 3006
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3006:3006"
+    restart: unless-stopped
+
+  seller-dashboard:
+    build: ./seller-dashboard
+    env_file:
+      - path: ./seller-dashboard/.env
+        required: false
+    environment:
+      <<: *service-urls
+      PORT: 3007
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - "3007:3007"
+    restart: unless-stopped
+
+  gateway:
+    build: ./gateway
+    environment:
+      <<: *service-urls
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth
+      - product
+      - cart
+      - order
+      - payment
+      - ai-buddy
+      - seller-dashboard
+    restart: unless-stopped

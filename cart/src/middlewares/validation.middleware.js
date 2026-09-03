@@ -33,7 +33,17 @@ const validateUpdateCartItem = [
   validateResult,
 ];
 
+const validateRemoveCartItem = [
+  param("productId")
+    .isString()
+    .withMessage("Product ID must be a string")
+    .custom((value) => mongoose.Types.ObjectId.isValid(value))
+    .withMessage("Invalid Product ID format"),
+  validateResult,
+];
+
 module.exports = {
   validateAddItemToCart,
   validateUpdateCartItem,
+  validateRemoveCartItem,
 };

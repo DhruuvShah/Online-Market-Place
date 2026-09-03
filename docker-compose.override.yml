@@ -1,0 +1,118 @@
+x-jwt: &jwt
+  JWT_SECRET: ${JWT_SECRET:-local_dev_jwt_secret_change_me}
+
+x-internal-key: &internal-key
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY:-local_dev_internal_key_change_me}
+
+x-infra: &infra-ready
+  mongo:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_started
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 20s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass localdevpassword
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "localdevpassword", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    restart: unless-stopped
+
+  auth:
+    environment:
+      <<: *jwt
+      MONGO_URI: mongodb://mongo:27017/HiveMindAuth
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: localdevpassword
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  product:
+    environment:
+      <<: [*jwt, *internal-key]
+      MONGO_URI: mongodb://mongo:27017/HiveMindProduct
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on: *infra-ready
+
+  cart:
+    environment:
+      <<: *jwt
+      MONGO_URI: mongodb://mongo:27017/HiveMindCart
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  order:
+    environment:
+      <<: [*jwt, *internal-key]
+      MONGO_URI: mongodb://mongo:27017/HiveMindOrder
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on: *infra-ready
+
+  payment:
+    environment:
+      <<: *jwt
+      MONGO_URI: mongodb://mongo:27017/HiveMindPayment
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on: *infra-ready
+
+  ai-buddy:
+    environment:
+      <<: *jwt
+
+  notification:
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_started
+
+  seller-dashboard:
+    environment:
+      <<: *jwt
+      MONGO_URI: mongodb://mongo:27017/HiveMindSellerDashboard
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+    depends_on: *infra-ready
+
+volumes:
+  mongo-data:

@@ -8,8 +8,9 @@ async function getMetrics(req, res) {
     const seller = req.user;
 
     // Get all products for this seller
-    const products = await productModel.find({ seller: seller._id });
+    const products = await productModel.find({ seller: seller.id });
     const productIds = products.map((p) => p._id);
+    const sellerProductIds = new Set(productIds.map(String));
 
     // Get all orders containing seller's products
     const orders = await orderModel.find({
@@ -24,7 +25,7 @@ async function getMetrics(req, res) {
 
     orders.forEach((order) => {
       order.items.forEach((item) => {
-        if (productIds.includes(item.product)) {
+        if (sellerProductIds.has(String(item.product))) {
           sales += item.quantity;
           revenue += item.price.amount * item.quantity;
           productSales[item.product] =
@@ -61,22 +62,23 @@ async function getOrders(req, res) {
     const seller = req.user;
 
     // Get all products for this seller
-    const products = await productModel.find({ seller: seller._id });
+    const products = await productModel.find({ seller: seller.id });
     const productIds = products.map((p) => p._id);
+    const sellerProductIds = new Set(productIds.map(String));
 
     // Get all orders containing seller's products
     const orders = await orderModel
       .find({
         "items.product": { $in: productIds },
       })
-      .populate("user", "name email")
+      .populate("user", "username email fullName")
       .sort({ createdAt: -1 });
 
     // Filter order items to only include those from this seller
     const filteredOrders = orders
       .map((order) => {
         const filteredItems = order.items.filter((item) =>
-          productIds.includes(item.product),
+          sellerProductIds.has(String(item.product)),
         );
         return {
           ...order.toObject(),
@@ -98,7 +100,7 @@ async function getProducts(req, res) {
     const seller = req.user;
 
     const products = await productModel
-      .find({ seller: seller._id })
+      .find({ seller: seller.id })
       .sort({ createdAt: -1 });
 
     return res.json(products);

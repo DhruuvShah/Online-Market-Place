@@ -1,0 +1,220 @@
+services:
+  - type: web
+    name: hivemind-auth
+    runtime: docker
+    dockerfilePath: ./auth/dockerfile
+    dockerContext: ./auth
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        sync: false
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+
+  - type: web
+    name: hivemind-product
+    runtime: docker
+    dockerfilePath: ./product/dockerfile
+    dockerContext: ./product
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: IMAGEKIT_PUBLIC_KEY
+        sync: false
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: IMAGEKIT_URL_ENDPOINT
+        sync: false
+
+  - type: web
+    name: hivemind-cart
+    runtime: docker
+    dockerfilePath: ./cart/dockerfile
+    dockerContext: ./cart
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        sync: false
+
+  - type: web
+    name: hivemind-order
+    runtime: docker
+    dockerfilePath: ./order/dockerfile
+    dockerContext: ./order
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: CART_SERVICE_URL
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        sync: false
+
+  - type: web
+    name: hivemind-payment
+    runtime: docker
+    dockerfilePath: ./payment/dockerfile
+    dockerContext: ./payment
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: ORDER_SERVICE_URL
+        sync: false
+
+  - type: web
+    name: hivemind-ai-buddy
+    runtime: docker
+    dockerfilePath: ./ai-buddy/dockerfile
+    dockerContext: ./ai-buddy
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        sync: false
+      - key: CART_SERVICE_URL
+        sync: false
+
+  - type: web
+    name: hivemind-notification
+    runtime: docker
+    dockerfilePath: ./notification/dockerfile
+    dockerContext: ./notification
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  - type: web
+    name: hivemind-seller-dashboard
+    runtime: docker
+    dockerfilePath: ./seller-dashboard/dockerfile
+    dockerContext: ./seller-dashboard
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RABBIT_URL
+        sync: false
+
+  - type: web
+    name: hivemind-gateway
+    runtime: docker
+    dockerfilePath: ./gateway/dockerfile
+    dockerContext: ./gateway
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_SERVICE_URL
+        sync: false
+      - key: PRODUCT_SERVICE_URL
+        sync: false
+      - key: CART_SERVICE_URL
+        sync: false
+      - key: ORDER_SERVICE_URL
+        sync: false
+      - key: PAYMENT_SERVICE_URL
+        sync: false
+      - key: AI_BUDDY_SERVICE_URL
+        sync: false
+      - key: SELLER_DASHBOARD_SERVICE_URL
+        sync: false

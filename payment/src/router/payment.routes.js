@@ -4,6 +4,8 @@ const paymentController = require("../controllers/payment.controller");
 
 const router = express.Router();
 
+router.post("/webhook", paymentController.handleWebhook);
+
 router.post(
   "/create/:orderId",
   createAuthMIddleware(["user"]),

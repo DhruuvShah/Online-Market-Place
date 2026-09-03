@@ -51,10 +51,17 @@ if (process.env.NODE_ENV === "test") {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD,
+    maxRetriesPerRequest: 1,
+    enableOfflineQueue: false,
+    retryStrategy: (times) => Math.min(times * 200, 5000),
   });
 
   redis.on("connect", () => {
     console.log("Connected to Redis");
+  });
+
+  redis.on("error", (err) => {
+    console.error("Redis error:", err.message);
   });
 
   module.exports = redis;

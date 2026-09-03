@@ -2,7 +2,8 @@ const userModel = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const redis = require("../db/redis");
-const { publishToQueue } = require("../broker/broker");
+const { publishToOutbox } = require("../broker/outbox");
+const { cookieOptions, MAX_AGE } = require("../config/cookie");
 
 async function registerUser(req, res) {
   try {
@@ -15,7 +16,7 @@ async function registerUser(req, res) {
     } = req.body;
 
     const isUserAlreadyExist = await userModel.findOne({
-      $or: [{ username }, { email }, { role }],
+      $or: [{ username }, { email }],
     });
 
     if (isUserAlreadyExist) {
@@ -35,13 +36,13 @@ async function registerUser(req, res) {
     });
 
     await Promise.all([
-      publishToQueue("AUTH_NOTIFICATION.USER_CREATED", {
+      publishToOutbox("AUTH_NOTIFICATION.USER_CREATED", {
         id: user._id,
         username: user.username,
         email: user.email,
         fullName: user.fullName,
       }),
-      publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", user),
+      publishToOutbox("AUTH_SELLER_DASHBOARD.USER_CREATED", user),
     ]);
 
     const token = jwt.sign(
@@ -55,11 +56,7 @@ async function registerUser(req, res) {
       { expiresIn: "1d" },
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, { ...cookieOptions, maxAge: MAX_AGE });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -106,11 +103,7 @@ async function loginUser(req, res) {
       { expiresIn: "1d" },
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, { ...cookieOptions, maxAge: MAX_AGE });
 
     return res.status(200).json({
       message: "Logged in successfully",
@@ -137,16 +130,17 @@ async function getCurrentUser(req, res) {
 }
 
 async function logoutUser(req, res) {
-  const token = req.cookies.token;
+  const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
 
   if (token) {
-    await redis.set(`blacklist:${token}`, "true", "EX", 24 * 60 * 60); // expire in 1 day
+    try {
+      await redis.set(`blacklist:${token}`, "true", "EX", 24 * 60 * 60); // expire in 1 day
+    } catch (err) {
+      console.error("Failed to blacklist token:", err.message);
+    }
   }
 
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-  });
+  res.clearCookie("token", cookieOptions);
 
   return res.status(200).json({ message: "Logged out successfully" });
 }
@@ -179,7 +173,7 @@ async function addUserAddress(req, res) {
           street,
           city,
           state,
-          pincode,
+          zip: pincode,
           country,
           isDefault,
         },

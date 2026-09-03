@@ -1,7 +1,12 @@
-const { promises } = require("supertest/lib/test");
 const orderModel = require("../models/order.model");
 const axios = require("axios");
-const { publishToQueue } = require("../broker/broker");
+const { publishToOutbox } = require("../broker/outbox");
+const { changeStock } = require("../services/product.service");
+
+const CART_SERVICE_URL =
+  process.env.CART_SERVICE_URL || "http://localhost:3002";
+const PRODUCT_SERVICE_URL =
+  process.env.PRODUCT_SERVICE_URL || "http://localhost:3001";
 
 async function createOrder(req, res) {
   const user = req.user;
@@ -9,20 +14,17 @@ async function createOrder(req, res) {
 
   try {
     // fetch user cart from cart service
-    const cartResponse = await axios.get(
-      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/cart`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const cartResponse = await axios.get(`${CART_SERVICE_URL}/api/cart`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
 
     const products = await Promise.all(
       cartResponse.data.cart.items.map(async (item) => {
         return (
           await axios.get(
-            `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/products/${item.productId}`,
+            `${PRODUCT_SERVICE_URL}/api/products/${item.productId}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -35,15 +37,13 @@ async function createOrder(req, res) {
 
     let priceAmount = 0;
 
-    const orderItems = cartResponse.data.cart.items.map((item, index) => {
+    const orderItems = cartResponse.data.cart.items.map((item) => {
       const product = products.find((p) => p._id === item.productId);
 
-      // if not in stock, does not allow order creation
-
-      if (product.stock < item.quantity) {
-        throw new Error(
-          `Product ${product.title} is out of stock or insufficient stock`,
-        );
+      if (!product) {
+        const error = new Error("Product is no longer available");
+        error.statusCode = 409;
+        throw error;
       }
 
       const itemTotal = product.price.amount * item.quantity;
@@ -58,6 +58,8 @@ async function createOrder(req, res) {
         },
       };
     });
+
+    await changeStock("reserve", orderItems);
 
     const order = await orderModel.create({
       user: user.id,
@@ -76,10 +78,27 @@ async function createOrder(req, res) {
       },
     });
 
-    await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+    await publishToOutbox("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+
+    try {
+      await axios.delete(`${CART_SERVICE_URL}/api/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to clear cart after order creation:", err.message);
+    }
 
     res.status(201).json({ order });
   } catch (err) {
+    if (err.statusCode === 409 || err.response?.status === 409) {
+      return res.status(409).json({
+        message: err.response?.data?.message || err.message,
+        productId: err.response?.data?.productId,
+      });
+    }
+
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
@@ -167,6 +186,12 @@ async function cancelOrderById(req, res) {
 
     order.status = "CANCELLED";
     await order.save();
+
+    try {
+      await changeStock("release", order.items);
+    } catch (err) {
+      console.error("Failed to release stock on cancel:", err.message);
+    }
 
     res.status(200).json({ order });
   } catch (err) {

@@ -10,12 +10,17 @@ const app = require("./src/app");
 const connectDB = require("./src/db/db");
 const listener = require("./src/broker/listener");
 const { connect } = require("./src/broker/broker");
+const attachShutdown = require("./src/shutdown");
 
 connectDB();
 connect().then(() => {
   listener();
 });
 
-app.listen(3007, () => {
-  console.log("Seller dashboard server is running on port 3007");
+const server = app.listen(process.env.PORT || 3007, () => {
+  console.log(
+    `Seller dashboard server is running on port ${process.env.PORT || 3007}`,
+  );
 });
+
+attachShutdown(server);

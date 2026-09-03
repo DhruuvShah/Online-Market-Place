@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --runInBand",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
@@ -18,11 +18,20 @@
     "@langchain/langgraph": "^1.1.4",
     "axios": "^1.13.5",
     "cookie": "^1.1.1",
+    "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.6",
+    "morgan": "^1.12.0",
     "socket.io": "^4.8.3",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "jest": "^30.5.1",
+    "socket.io-client": "^4.8.3",
+    "supertest": "^7.2.2"
   }
 }

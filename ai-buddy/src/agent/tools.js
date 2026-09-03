@@ -2,12 +2,17 @@ const { tool } = require("@langchain/core/tools");
 const { z } = require("zod");
 const axios = require("axios");
 
+const PRODUCT_SERVICE_URL =
+  process.env.PRODUCT_SERVICE_URL || "http://localhost:3001";
+const CART_SERVICE_URL =
+  process.env.CART_SERVICE_URL || "http://localhost:3002";
+
 const searchProduct = tool(
   async ({ query, token }) => {
     console.log("searchProduct called with data:", { query, token });
 
     const response = await axios.get(
-      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/products?q=${query}`,
+      `${PRODUCT_SERVICE_URL}/api/products?q=${encodeURIComponent(query)}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -30,7 +35,7 @@ const searchProduct = tool(
 const addProductToCart = tool(
   async ({ productId, qty = 1, token }) => {
     const response = await axios.post(
-      `http://hivemind-alb-1598605279.ap-south-1.elb.amazonaws.com/api/cart/items`,
+      `${CART_SERVICE_URL}/api/cart/items`,
       {
         productId,
         qty,

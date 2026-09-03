@@ -1,4 +1,3 @@
-const { sign } = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema(
@@ -13,6 +12,8 @@ const paymentSchema = new mongoose.Schema(
       default: "PENDING",
     },
     user: { type: mongoose.Schema.Types.ObjectId, required: true },
+    userEmail: { type: String },
+    username: { type: String },
     price: {
       amount: { type: Number, required: true },
       currency: {
@@ -25,6 +26,8 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+paymentSchema.index({ razorpayOrderId: 1 });
 
 const paymentModel = mongoose.model("payment", paymentSchema);
 
