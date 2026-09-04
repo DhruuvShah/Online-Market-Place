@@ -8,6 +8,19 @@
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
 
+  --color-canvas: #f5f3ee;
+  --color-raised: #fbfaf7;
+  --color-sunken: #edeae3;
+  --color-line: #ded9cf;
+  --color-line-strong: #c9c2b4;
+  --color-ink: #14130f;
+  --color-ink-muted: #6b675e;
+  --color-ink-subtle: #918c81;
+  --color-accent: #d94e1f;
+  --color-accent-hover: #c04517;
+  --color-accent-contrast: #fdfcfa;
+  --color-honey: #dd9422;
+
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 22px;
@@ -15,57 +28,42 @@
 
 @layer theme {
   :root {
-    --canvas: #f5f3ee;
-    --raised: #fbfaf7;
-    --sunken: #edeae3;
-    --border: #ded9cf;
-    --border-strong: #c9c2b4;
-    --ink: #14130f;
-    --ink-muted: #6b675e;
-    --ink-subtle: #918c81;
-    --accent: #d94e1f;
-    --accent-hover: #c04517;
-    --accent-contrast: #fdfcfa;
-    --honey: #dd9422;
-    --moss: #2f3a2e;
     --grain-opacity: 0.035;
     color-scheme: light;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --canvas: #12110f;
-      --raised: #1a1815;
-      --sunken: #0c0b0a;
-      --border: #2b2823;
-      --border-strong: #3d3931;
-      --ink: #f2efe8;
-      --ink-muted: #9c968a;
-      --ink-subtle: #7a746a;
-      --accent: #f26b34;
-      --accent-hover: #ff7f4d;
-      --accent-contrast: #12110f;
-      --honey: #f0b454;
-      --moss: #cfd8c8;
+      --color-canvas: #12110f;
+      --color-raised: #1a1815;
+      --color-sunken: #0c0b0a;
+      --color-line: #2b2823;
+      --color-line-strong: #3d3931;
+      --color-ink: #f2efe8;
+      --color-ink-muted: #9c968a;
+      --color-ink-subtle: #7a746a;
+      --color-accent: #f26b34;
+      --color-accent-hover: #ff7f4d;
+      --color-accent-contrast: #12110f;
+      --color-honey: #f0b454;
       --grain-opacity: 0.05;
       color-scheme: dark;
     }
   }
 
   :root[data-theme="dark"] {
-    --canvas: #12110f;
-    --raised: #1a1815;
-    --sunken: #0c0b0a;
-    --border: #2b2823;
-    --border-strong: #3d3931;
-    --ink: #f2efe8;
-    --ink-muted: #9c968a;
-    --ink-subtle: #7a746a;
-    --accent: #f26b34;
-    --accent-hover: #ff7f4d;
-    --accent-contrast: #12110f;
-    --honey: #f0b454;
-    --moss: #cfd8c8;
+    --color-canvas: #12110f;
+    --color-raised: #1a1815;
+    --color-sunken: #0c0b0a;
+    --color-line: #2b2823;
+    --color-line-strong: #3d3931;
+    --color-ink: #f2efe8;
+    --color-ink-muted: #9c968a;
+    --color-ink-subtle: #7a746a;
+    --color-accent: #f26b34;
+    --color-accent-hover: #ff7f4d;
+    --color-accent-contrast: #12110f;
+    --color-honey: #f0b454;
     --grain-opacity: 0.05;
     color-scheme: dark;
   }
@@ -79,8 +77,8 @@
 
   body {
     position: relative;
-    background: var(--canvas);
-    color: var(--ink);
+    background: var(--color-canvas);
+    color: var(--color-ink);
     font-family: var(--font-sans);
     font-optical-sizing: auto;
     overflow-x: clip;
@@ -106,78 +104,68 @@
   }
 
   ::selection {
-    background: var(--accent);
-    color: var(--accent-contrast);
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
     border-radius: 4px;
   }
 }
 
-@layer utilities {
-  .font-display {
-    font-family: var(--font-display);
-    font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 90;
-  }
+@utility font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 90;
+}
 
-  .text-display {
-    font-family: var(--font-display);
-    font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 144;
-    font-size: clamp(2.5rem, 8vw, 5.25rem);
-    font-weight: 400;
-    letter-spacing: -0.028em;
-    line-height: 0.98;
-  }
+@utility text-display {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 144;
+  font-size: clamp(2.5rem, 8vw, 5.25rem);
+  font-weight: 400;
+  letter-spacing: -0.028em;
+  line-height: 0.98;
+}
 
-  .text-section {
-    font-family: var(--font-display);
-    font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 72;
-    font-size: clamp(1.75rem, 4.4vw, 2.75rem);
-    font-weight: 400;
-    letter-spacing: -0.018em;
-    line-height: 1.08;
-  }
+@utility text-section {
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 72;
+  font-size: clamp(1.75rem, 4.4vw, 2.75rem);
+  font-weight: 400;
+  letter-spacing: -0.018em;
+  line-height: 1.08;
+}
 
-  .text-title {
-    letter-spacing: -0.014em;
-    line-height: 1.2;
-  }
+@utility text-title {
+  letter-spacing: -0.014em;
+  line-height: 1.2;
+}
 
-  .text-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-  }
+@utility text-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
 
-  .tnum {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-  }
+@utility tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
 
-  .shell {
-    width: 100%;
-    max-width: 74rem;
-    margin-inline: auto;
-    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
-  }
-
-  .rule {
-    border-color: var(--border);
-  }
+@utility shell {
+  width: 100%;
+  max-width: 74rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 2.5rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-
-  .mesh-blob {
-    animation: none !important;
   }
 }

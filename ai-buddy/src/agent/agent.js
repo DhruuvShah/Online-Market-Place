@@ -12,8 +12,6 @@ const model = new ChatGoogleGenerativeAI({
   temperature: 0.5,
 });
 
-console.log("Initializing agent with model:", model);
-
 const graph = new StateGraph(MessagesAnnotation)
   .addNode("tools", async (state, config) => {
     const lastMessage = state.messages[state.messages.length - 1];
@@ -27,8 +25,6 @@ const graph = new StateGraph(MessagesAnnotation)
           throw new Error(`Tool ${call.name} not found`);
         }
         const toolInput = call.args;
-
-        console.log("Invoking tool:", call.name, "with input:", call);
 
         const toolResult = await tool.func({
           ...toolInput,

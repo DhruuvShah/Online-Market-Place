@@ -48,24 +48,24 @@ export default function Orders() {
 
   return (
     <div className="shell py-12 sm:py-16">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">History</p>
+      <p className="text-eyebrow text-ink-subtle">History</p>
       <h1 className="text-section mt-4">Your orders</h1>
-      <p className="mt-3 text-[14px] text-[var(--ink-muted)]">
+      <p className="mt-3 text-[14px] text-ink-muted">
         {total} {total === 1 ? "order" : "orders"}
       </p>
 
-      <ul className="mt-10 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+      <ul className="mt-10 divide-y divide-line border-y border-line">
         {orders.map((order) => (
           <li key={order._id}>
             <Link
               to={`/orders/${order._id}`}
-              className="flex flex-col gap-3 py-5 transition-colors hover:bg-[var(--raised)] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-2"
+              className="flex flex-col gap-3 py-5 transition-colors hover:bg-raised sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-2"
             >
               <div className="flex min-w-0 flex-col gap-1.5">
                 <span className="tnum text-[14px] font-medium">
                   {order._id.slice(-12).toUpperCase()}
                 </span>
-                <span className="text-[13px] text-[var(--ink-muted)]">
+                <span className="text-[13px] text-ink-muted">
                   {formatDate(order.createdAt)} ·{" "}
                   {order.items.length}{" "}
                   {order.items.length === 1 ? "item" : "items"}
@@ -95,7 +95,7 @@ export default function Orders() {
           >
             Previous
           </Button>
-          <span className="tnum text-[13px] text-[var(--ink-muted)]">
+          <span className="tnum text-[13px] text-ink-muted">
             Page {page} of {lastPage}
           </span>
           <Button

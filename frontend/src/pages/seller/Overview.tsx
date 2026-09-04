@@ -22,7 +22,7 @@ export default function Overview() {
     return (
       <div className="shell py-12">
         <Skeleton className="h-10 w-64" />
-        <div className="mt-10 grid gap-px bg-[var(--border)] sm:grid-cols-3">
+        <div className="mt-10 grid gap-px bg-line sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-28" />
           ))}
@@ -62,7 +62,7 @@ export default function Overview() {
 
   return (
     <div className="shell py-12 sm:py-16">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">Dashboard</p>
+      <p className="text-eyebrow text-ink-subtle">Dashboard</p>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-section">
           {user ? `Welcome back, ${user.fullName?.firstName ?? user.username}` : "Overview"}
@@ -75,11 +75,11 @@ export default function Overview() {
         </Link>
       </div>
 
-      <div className="mt-10 grid gap-px border-y border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
+      <div className="mt-10 grid gap-px border-y border-line bg-line sm:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-[var(--canvas)] py-8">
+          <div key={stat.label} className="bg-canvas py-8">
             <div className="tnum text-3xl font-medium">{stat.value}</div>
-            <div className="mt-2 text-[13px] text-[var(--ink-muted)]">
+            <div className="mt-2 text-[13px] text-ink-muted">
               {stat.label}
             </div>
           </div>
@@ -89,23 +89,23 @@ export default function Overview() {
       {(lowStock.length > 0 || soldOut.length > 0) && (
         <section className="mt-14">
           <h2 className="text-title flex items-center gap-2 text-lg font-medium">
-            <AlertTriangle className="h-4 w-4 text-[var(--honey)]" strokeWidth={2} />
+            <AlertTriangle className="h-4 w-4 text-honey" strokeWidth={2} />
             Needs attention
           </h2>
 
-          <ul className="mt-5 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+          <ul className="mt-5 divide-y divide-line border-y border-line">
             {[...soldOut, ...lowStock].map((product) => (
               <li key={product._id}>
                 <Link
                   to={`/seller/products/${product._id}/edit`}
-                  className="flex items-center justify-between gap-4 py-4 text-[14px] transition-colors hover:text-[var(--accent)]"
+                  className="flex items-center justify-between gap-4 py-4 text-[14px] transition-colors hover:text-accent"
                 >
                   <span>{product.title}</span>
                   <span
                     className={
                       product.stock <= 0
-                        ? "text-[var(--accent)]"
-                        : "text-[var(--honey)]"
+                        ? "text-accent"
+                        : "text-honey"
                     }
                   >
                     {product.stock <= 0
@@ -122,18 +122,18 @@ export default function Overview() {
       {(metrics?.topProducts?.length ?? 0) > 0 && (
         <section className="mt-14">
           <h2 className="text-title flex items-center gap-2 text-lg font-medium">
-            <TrendingUp className="h-4 w-4 text-[var(--accent)]" strokeWidth={2} />
+            <TrendingUp className="h-4 w-4 text-accent" strokeWidth={2} />
             Top products
           </h2>
 
-          <ul className="mt-5 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+          <ul className="mt-5 divide-y divide-line border-y border-line">
             {metrics?.topProducts.map((product) => (
               <li
                 key={product.id}
                 className="flex items-center justify-between gap-4 py-4 text-[14px]"
               >
                 <span>{product.title}</span>
-                <span className="tnum text-[var(--ink-muted)]">
+                <span className="tnum text-ink-muted">
                   {product.sold} sold
                 </span>
               </li>
@@ -147,18 +147,18 @@ export default function Overview() {
           <h2 className="text-title text-lg font-medium">Recent orders</h2>
           <Link
             to="/seller/orders"
-            className="text-[13px] underline underline-offset-4 hover:text-[var(--accent)]"
+            className="text-[13px] underline underline-offset-4 hover:text-accent"
           >
             View all
           </Link>
         </div>
 
         {recentOrders.length === 0 ? (
-          <p className="mt-5 text-[14px] text-[var(--ink-muted)]">
+          <p className="mt-5 text-[14px] text-ink-muted">
             No orders yet. They appear here as soon as a buyer checks out.
           </p>
         ) : (
-          <ul className="mt-5 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+          <ul className="mt-5 divide-y divide-line border-y border-line">
             {recentOrders.map((order) => (
               <li
                 key={order._id}
@@ -168,7 +168,7 @@ export default function Overview() {
                   <span className="tnum text-[14px]">
                     {order._id.slice(-12).toUpperCase()}
                   </span>
-                  <span className="text-[13px] text-[var(--ink-muted)]">
+                  <span className="text-[13px] text-ink-muted">
                     {formatDate(order.createdAt)}
                   </span>
                 </div>

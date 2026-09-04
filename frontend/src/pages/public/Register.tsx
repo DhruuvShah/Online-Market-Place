@@ -69,7 +69,7 @@ export default function Register() {
       }).unwrap();
 
       await login({ email: values.email, password: values.password }).unwrap();
-      navigate(role === "seller" ? "/seller" : "/discover", { replace: true });
+      void navigate(role === "seller" ? "/seller" : "/discover", { replace: true });
     } catch (error) {
       const fieldErrors = getFieldErrors(error);
       for (const [path, message] of Object.entries(fieldErrors)) {
@@ -87,11 +87,11 @@ export default function Register() {
   return (
     <div>
       <h1 className="font-display text-4xl">Create your account</h1>
-      <p className="mt-3 text-[15px] text-[var(--ink-muted)]">
+      <p className="mt-3 text-[15px] text-ink-muted">
         One account, either side of the marketplace.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-9 flex flex-col gap-5">
+      <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} className="mt-9 flex flex-col gap-5">
         <FormAlert message={alert} />
 
         <fieldset className="flex flex-col gap-2.5">
@@ -104,10 +104,10 @@ export default function Register() {
             return (
               <label
                 key={option.value}
-                className={`flex cursor-pointer gap-3 rounded-[var(--radius-md)] border p-3.5 transition-colors ${
+                className={`flex cursor-pointer gap-3 rounded-md border p-3.5 transition-colors ${
                   selected
-                    ? "border-[var(--ink)] bg-[var(--raised)]"
-                    : "border-[var(--border-strong)] hover:border-[var(--ink-subtle)]"
+                    ? "border-ink bg-raised"
+                    : "border-line-strong hover:border-ink-subtle"
                 }`}
               >
                 <input
@@ -120,7 +120,7 @@ export default function Register() {
                 />
                 <option.icon
                   className={`mt-0.5 h-4 w-4 shrink-0 ${
-                    selected ? "text-[var(--accent)]" : "text-[var(--ink-subtle)]"
+                    selected ? "text-accent" : "text-ink-subtle"
                   }`}
                   strokeWidth={1.75}
                 />
@@ -128,7 +128,7 @@ export default function Register() {
                   <span className="block text-[14px] font-medium">
                     {option.title}
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-[var(--ink-muted)]">
+                  <span className="mt-0.5 block text-[13px] text-ink-muted">
                     {option.body}
                   </span>
                 </span>
@@ -136,7 +136,7 @@ export default function Register() {
             );
           })}
 
-          <p className="text-[13px] text-[var(--ink-subtle)]">
+          <p className="text-[13px] text-ink-subtle">
             This cannot be changed later.
           </p>
         </fieldset>
@@ -211,7 +211,7 @@ export default function Register() {
           {isBusy ? "Creating account…" : "Create account"}
         </Button>
 
-        <p className="text-[13px] leading-relaxed text-[var(--ink-subtle)]">
+        <p className="text-[13px] leading-relaxed text-ink-subtle">
           By creating an account you agree to our{" "}
           <Link to="/terms" className="underline underline-offset-2">
             terms
@@ -224,11 +224,11 @@ export default function Register() {
         </p>
       </form>
 
-      <p className="mt-8 text-[14px] text-[var(--ink-muted)]">
+      <p className="mt-8 text-[14px] text-ink-muted">
         Already have an account?{" "}
         <Link
           to="/login"
-          className="font-medium text-[var(--ink)] underline underline-offset-4 hover:text-[var(--accent)]"
+          className="font-medium text-ink underline underline-offset-4 hover:text-accent"
         >
           Sign in
         </Link>

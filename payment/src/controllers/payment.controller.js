@@ -136,7 +136,7 @@ async function verifyPayment(req, res) {
       payment,
     });
   } catch (error) {
-    console.log(error);
+    console.error("verifyPayment failed:", error.message);
     await publishToOutbox("PAYMENT_NOTIFICATION.PAYMENT_FAILED", {
       email: req.user.email,
       paymentId: paymentId,

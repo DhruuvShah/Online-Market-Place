@@ -9,8 +9,6 @@ const CART_SERVICE_URL =
 
 const searchProduct = tool(
   async ({ query, token }) => {
-    console.log("searchProduct called with data:", { query, token });
-
     const response = await axios.get(
       `${PRODUCT_SERVICE_URL}/api/products?q=${encodeURIComponent(query)}`,
       {
@@ -20,7 +18,6 @@ const searchProduct = tool(
       },
     );
 
-    console.log("searchProduct response:", response.data);
     return JSON.stringify(response.data);
   },
   {

@@ -29,7 +29,6 @@ function getImageKit() {
       privateKey: IMAGEKIT_PRIVATE_KEY,
       urlEndpoint: IMAGEKIT_URL_ENDPOINT,
     });
-    console.log("✅ ImageKit initialized successfully");
     return imagekitInstance;
   } catch (err) {
     console.error("ImageKit init failed:", err.message);
@@ -38,7 +37,6 @@ function getImageKit() {
 }
 
 async function uploadImage({ buffer, filename }) {
-  console.log("Uploading image:", filename);
   const imagekit = getImageKit();
 
   // ✅ Fallback mode (dev / test / broken ImageKit)
@@ -59,7 +57,6 @@ async function uploadImage({ buffer, filename }) {
     fileName: filename || uuidv4(),
   });
 
-  console.log("Upload successful:", res.fileId);
   return {
     id: res.fileId,
     url: res.url,

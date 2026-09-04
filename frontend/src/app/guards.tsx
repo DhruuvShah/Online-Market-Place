@@ -5,7 +5,7 @@ import type { Role } from "@/types";
 function Pending() {
   return (
     <div className="grid min-h-dvh place-items-center px-6">
-      <p className="text-[14px] text-[var(--ink-muted)]">
+      <p className="text-[14px] text-ink-muted">
         Waking up the marketplace…
       </p>
     </div>

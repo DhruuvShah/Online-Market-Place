@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/Button";
 export default function NotFound() {
   return (
     <section className="shell flex min-h-[70dvh] flex-col justify-center py-24">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">Error 404</p>
+      <p className="text-eyebrow text-ink-subtle">Error 404</p>
 
       <h1 className="text-display mt-6 max-w-[14ch]">
         This page is not on the shelf
       </h1>
 
-      <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[var(--ink-muted)]">
+      <p className="mt-6 max-w-md text-[16px] leading-relaxed text-ink-muted">
         The link may be old, or the product may have been removed by its seller.
         Everything still for sale is in the catalog.
       </p>

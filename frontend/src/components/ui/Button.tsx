@@ -12,10 +12,10 @@ type Props = ComponentPropsWithoutRef<"button"> & {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-hover)]",
+    "bg-accent text-accent-contrast hover:bg-accent-hover",
   secondary:
-    "bg-[var(--raised)] text-[var(--ink)] border border-[var(--border-strong)] hover:border-[var(--ink)]",
-  ghost: "text-[var(--ink)] hover:bg-[var(--raised)]",
+    "bg-raised text-ink border border-line-strong hover:border-ink",
+  ghost: "text-ink hover:bg-raised",
 };
 
 const sizes: Record<Size, string> = {

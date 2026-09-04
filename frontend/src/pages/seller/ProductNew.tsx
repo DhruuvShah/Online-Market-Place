@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
 import { FormAlert } from "@/components/ui/FormAlert";
 import { Spinner } from "@/components/ui/Spinner";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { getErrorMessage, getFieldErrors } from "@/lib/errors";
 
 const MAX_IMAGES = 5;
@@ -28,7 +28,6 @@ export default function ProductNew() {
   const { notify } = useToast();
   const [createProduct, { isLoading }] = useCreateProductMutation();
   const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
   const [alert, setAlert] = useState<string | null>(null);
 
   const {
@@ -42,11 +41,17 @@ export default function ProductNew() {
     defaultValues: { stock: 1 },
   });
 
-  useEffect(() => {
-    const urls = files.map((file) => URL.createObjectURL(file));
-    setPreviews(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
-  }, [files]);
+  const previews = useMemo(
+    () => files.map((file) => URL.createObjectURL(file)),
+    [files],
+  );
+
+  useEffect(
+    () => () => {
+      previews.forEach((url) => URL.revokeObjectURL(url));
+    },
+    [previews],
+  );
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming) return;
@@ -69,7 +74,7 @@ export default function ProductNew() {
     try {
       const product = await createProduct(body).unwrap();
       notify(`${product.title} is live`);
-      navigate("/seller/products", { replace: true });
+      void navigate("/seller/products", { replace: true });
     } catch (error) {
       const fieldErrors = getFieldErrors(error);
       if (fieldErrors.title) setError("title", { message: fieldErrors.title });
@@ -81,7 +86,7 @@ export default function ProductNew() {
     <div className="shell max-w-2xl py-12 sm:py-16">
       <Link
         to="/seller/products"
-        className="inline-flex items-center gap-1.5 text-[14px] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+        className="inline-flex items-center gap-1.5 text-[14px] text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Products
@@ -89,7 +94,7 @@ export default function ProductNew() {
 
       <h1 className="text-section mt-6">List a product</h1>
 
-      <form onSubmit={handleSubmit(submit)} className="mt-9 flex flex-col gap-6">
+      <form onSubmit={(event) => void handleSubmit(submit)(event)} className="mt-9 flex flex-col gap-6">
         <FormAlert message={alert} />
 
         <Field label="Title" htmlFor="title" error={errors.title?.message}>
@@ -105,7 +110,7 @@ export default function ProductNew() {
           <textarea
             id="description"
             rows={4}
-            className="w-full resize-y rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--raised)] px-3.5 py-3 text-[15px] transition-colors placeholder:text-[var(--ink-subtle)] focus:outline-none focus-visible:border-[var(--ink)]"
+            className="w-full resize-y rounded-sm border border-line-strong bg-raised px-3.5 py-3 text-[15px] transition-colors placeholder:text-ink-subtle focus:outline-none focus-visible:border-ink"
             {...register("description")}
           />
         </Field>
@@ -139,7 +144,7 @@ export default function ProductNew() {
         <div className="flex flex-col gap-2.5">
           <span className="text-[13px] font-medium">
             Images{" "}
-            <span className="text-[var(--ink-subtle)]">
+            <span className="text-ink-subtle">
               ({files.length}/{MAX_IMAGES})
             </span>
           </span>
@@ -148,7 +153,7 @@ export default function ProductNew() {
             {previews.map((preview, index) => (
               <div
                 key={preview}
-                className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] bg-[var(--sunken)]"
+                className="relative aspect-square overflow-hidden rounded-sm bg-sunken"
               >
                 <img src={preview} alt="" className="h-full w-full object-cover" />
                 <button
@@ -159,7 +164,7 @@ export default function ProductNew() {
                     )
                   }
                   aria-label="Remove image"
-                  className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-[var(--ink)] text-[var(--canvas)]"
+                  className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-ink text-canvas"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -167,7 +172,7 @@ export default function ProductNew() {
             ))}
 
             {files.length < MAX_IMAGES && (
-              <label className="grid aspect-square cursor-pointer place-items-center rounded-[var(--radius-sm)] border border-dashed border-[var(--border-strong)] text-[var(--ink-subtle)] transition-colors hover:border-[var(--ink)] hover:text-[var(--ink)]">
+              <label className="grid aspect-square cursor-pointer place-items-center rounded-sm border border-dashed border-line-strong text-ink-subtle transition-colors hover:border-ink hover:text-ink">
                 <ImagePlus className="h-5 w-5" strokeWidth={1.5} />
                 <input
                   type="file"

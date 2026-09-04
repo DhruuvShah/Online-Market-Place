@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Field";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { formatPrice, stockLabel } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -72,7 +72,7 @@ export default function Products() {
     <div className="shell py-12 sm:py-16">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-eyebrow text-[var(--ink-subtle)]">Inventory</p>
+          <p className="text-eyebrow text-ink-subtle">Inventory</p>
           <h1 className="text-section mt-4">Products</h1>
         </div>
         <Link to="/seller/products/new">
@@ -84,7 +84,7 @@ export default function Products() {
       </div>
 
       <div className="relative mt-9 max-w-sm">
-        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[var(--ink-subtle)]" />
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
         <Input
           value={term}
           onChange={(event) => setTerm(event.target.value)}
@@ -94,17 +94,17 @@ export default function Products() {
         />
       </div>
 
-      <p className="mt-4 text-[13px] text-[var(--ink-muted)]">
+      <p className="mt-4 text-[13px] text-ink-muted">
         {filtered.length} of {products?.length}{" "}
         {products?.length === 1 ? "product" : "products"}
       </p>
 
       {filtered.length === 0 ? (
-        <p className="mt-10 text-[14px] text-[var(--ink-muted)]">
+        <p className="mt-10 text-[14px] text-ink-muted">
           No products match “{term}”.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+        <ul className="mt-6 divide-y divide-line border-y border-line">
           {filtered.map((product) => {
             const stock = stockLabel(product.stock);
             const image = product.images?.[0];
@@ -114,7 +114,7 @@ export default function Products() {
                 key={product._id}
                 className="group flex items-center gap-4 py-4"
               >
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--sunken)]">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-sm bg-sunken">
                   {image ? (
                     <img
                       src={image.thumbnail || image.url}
@@ -122,7 +122,7 @@ export default function Products() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="grid h-full place-items-center text-[var(--ink-subtle)]">
+                    <div className="grid h-full place-items-center text-ink-subtle">
                       <ImageOff className="h-4 w-4" strokeWidth={1.5} />
                     </div>
                   )}
@@ -131,12 +131,12 @@ export default function Products() {
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <Link
                     to={`/products/${product._id}`}
-                    className="text-title truncate text-[15px] font-medium hover:text-[var(--accent)]"
+                    className="text-title truncate text-[15px] font-medium hover:text-accent"
                   >
                     {product.title}
                   </Link>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="tnum text-[13px] text-[var(--ink-muted)]">
+                    <span className="tnum text-[13px] text-ink-muted">
                       {formatPrice(product.price)}
                     </span>
                     <Badge
@@ -157,15 +157,15 @@ export default function Products() {
                   <Link
                     to={`/seller/products/${product._id}/edit`}
                     aria-label={`Edit ${product.title}`}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--ink-muted)] transition-colors hover:bg-[var(--sunken)] hover:text-[var(--ink)]"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-sunken hover:text-ink"
                   >
                     <Pencil className="h-4 w-4" strokeWidth={1.75} />
                   </Link>
                   <button
-                    onClick={() => remove(product._id, product.title)}
+                    onClick={() => void remove(product._id, product.title)}
                     disabled={pendingId === product._id}
                     aria-label={`Delete ${product.title}`}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--ink-muted)] transition-colors hover:bg-[var(--sunken)] hover:text-[var(--accent)] disabled:opacity-40"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-sunken hover:text-accent disabled:opacity-40"
                   >
                     <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                   </button>

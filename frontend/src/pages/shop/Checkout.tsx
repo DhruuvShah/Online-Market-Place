@@ -93,7 +93,7 @@ export default function Checkout() {
         setAlert(
           "Order placed, but the payment window could not open. Open it again from your orders.",
         );
-        navigate(`/orders/${order._id}`, { replace: true });
+        void navigate(`/orders/${order._id}`, { replace: true });
         return;
       }
 
@@ -114,7 +114,7 @@ export default function Checkout() {
           } catch {
             // The webhook remains the source of truth; the success page polls.
           }
-          navigate(`/orders/${order._id}/success`, { replace: true });
+          void navigate(`/orders/${order._id}/success`, { replace: true });
         },
         modal: {
           ondismiss: () => {
@@ -139,7 +139,7 @@ export default function Checkout() {
     <div className="shell py-12 sm:py-16">
       <Link
         to="/cart"
-        className="inline-flex items-center gap-1.5 text-[14px] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+        className="inline-flex items-center gap-1.5 text-[14px] text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to cart
@@ -153,19 +153,19 @@ export default function Checkout() {
             <span
               className={`inline-flex items-center gap-2 text-[13px] ${
                 index === step
-                  ? "text-[var(--ink)]"
+                  ? "text-ink"
                   : index < step
-                    ? "text-[var(--ink-muted)]"
-                    : "text-[var(--ink-subtle)]"
+                    ? "text-ink-muted"
+                    : "text-ink-subtle"
               }`}
             >
               <span
                 className={`tnum grid h-6 w-6 place-items-center rounded-full border text-[11px] ${
                   index < step
-                    ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
+                    ? "border-accent bg-accent text-accent-contrast"
                     : index === step
-                      ? "border-[var(--ink)]"
-                      : "border-[var(--border-strong)]"
+                      ? "border-ink"
+                      : "border-line-strong"
                 }`}
               >
                 {index < step ? <Check className="h-3 w-3" /> : index + 1}
@@ -173,7 +173,7 @@ export default function Checkout() {
               {label}
             </span>
             {index < steps.length - 1 && (
-              <span className="h-px w-6 bg-[var(--border-strong)]" />
+              <span className="h-px w-6 bg-line-strong" />
             )}
           </li>
         ))}
@@ -189,7 +189,7 @@ export default function Checkout() {
 
           {step === 0 && (
             <form
-              onSubmit={handleSubmit(submitAddress)}
+              onSubmit={(event) => void handleSubmit(submitAddress)(event)}
               className="flex flex-col gap-5"
             >
               <h2 className="text-title text-lg font-medium">
@@ -262,10 +262,10 @@ export default function Checkout() {
             <div>
               <h2 className="text-title text-lg font-medium">Review</h2>
 
-              <div className="mt-5 rounded-[var(--radius-md)] border border-[var(--border)] p-5">
+              <div className="mt-5 rounded-md border border-line p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[13px] text-[var(--ink-muted)]">
+                    <p className="text-[13px] text-ink-muted">
                       Shipping to
                     </p>
                     <address className="mt-1.5 text-[14px] not-italic leading-relaxed">
@@ -286,7 +286,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <ul className="mt-6 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+              <ul className="mt-6 divide-y divide-line border-y border-line">
                 {cart.cart.items.map((line) => (
                   <li
                     key={line.productId}
@@ -294,7 +294,7 @@ export default function Checkout() {
                   >
                     <span className="text-[14px]">
                       {line.title ?? "Unavailable"}
-                      <span className="tnum ml-2 text-[var(--ink-muted)]">
+                      <span className="tnum ml-2 text-ink-muted">
                         ×{line.quantity}
                       </span>
                     </span>
@@ -309,7 +309,7 @@ export default function Checkout() {
 
               <Button
                 size="lg"
-                onClick={placeAndPay}
+                onClick={() => void placeAndPay()}
                 disabled={isPaying}
                 className="mt-8 px-10"
               >
@@ -321,12 +321,12 @@ export default function Checkout() {
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--raised)] p-6">
+          <div className="rounded-md border border-line bg-raised p-6">
             <h2 className="text-title font-medium">Order total</h2>
 
             <dl className="mt-5 flex flex-col gap-3 text-[14px]">
               <div className="flex justify-between">
-                <dt className="text-[var(--ink-muted)]">
+                <dt className="text-ink-muted">
                   Subtotal ({totals.totalQuantity})
                 </dt>
                 <dd className="tnum">
@@ -335,14 +335,14 @@ export default function Checkout() {
               </div>
             </dl>
 
-            <div className="mt-5 flex justify-between border-t border-[var(--border)] pt-5">
+            <div className="mt-5 flex justify-between border-t border-line pt-5">
               <span className="font-medium">Total</span>
               <span className="tnum text-lg">
                 {formatMoney(totals.subtotal, totals.currency)}
               </span>
             </div>
 
-            <p className="mt-5 flex items-start gap-2 text-[12px] leading-relaxed text-[var(--ink-subtle)]">
+            <p className="mt-5 flex items-start gap-2 text-[12px] leading-relaxed text-ink-subtle">
               <Lock className="mt-0.5 h-3 w-3 shrink-0" />
               Card details go directly to Razorpay. We never see them.
             </p>

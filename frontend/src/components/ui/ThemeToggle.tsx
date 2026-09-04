@@ -22,7 +22,7 @@ export function ThemeToggle() {
       onClick={cycle}
       aria-label={labels[theme]}
       title={labels[theme]}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--ink-muted)] transition-colors hover:bg-[var(--raised)] hover:text-[var(--ink)]"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-raised hover:text-ink"
     >
       <Icon className="h-4 w-4" strokeWidth={1.75} />
     </button>

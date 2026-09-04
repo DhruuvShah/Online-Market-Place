@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import { ReceiptText } from "lucide-react";
 import { useSellerOrdersQuery } from "@/services/seller.api";
-import {
-  OrderStatusBadge,
-  orderStatusLabels,
-} from "@/features/orders/components/OrderStatusBadge";
+import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { orderStatusLabels } from "@/features/orders/orderStatus";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -55,7 +53,7 @@ export default function SellerOrders() {
 
   return (
     <div className="shell py-12 sm:py-16">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">Sales</p>
+      <p className="text-eyebrow text-ink-subtle">Sales</p>
       <h1 className="text-section mt-4">Orders</h1>
 
       <div className="mt-8 flex flex-wrap gap-2">
@@ -65,8 +63,8 @@ export default function SellerOrders() {
             onClick={() => setStatus(option)}
             className={`rounded-full border px-3.5 py-1.5 text-[13px] transition-colors ${
               status === option
-                ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--canvas)]"
-                : "border-[var(--border-strong)] hover:border-[var(--ink)]"
+                ? "border-ink bg-ink text-canvas"
+                : "border-line-strong hover:border-ink"
             }`}
           >
             {option === "ALL" ? "All" : orderStatusLabels[option]}
@@ -74,16 +72,16 @@ export default function SellerOrders() {
         ))}
       </div>
 
-      <p className="mt-5 text-[13px] text-[var(--ink-muted)]">
+      <p className="mt-5 text-[13px] text-ink-muted">
         {visible.length} {visible.length === 1 ? "order" : "orders"}
       </p>
 
       {visible.length === 0 ? (
-        <p className="mt-10 text-[14px] text-[var(--ink-muted)]">
+        <p className="mt-10 text-[14px] text-ink-muted">
           No orders with this status.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+        <ul className="mt-6 divide-y divide-line border-y border-line">
           {visible.map((order) => {
             const sellerTotal = order.items.reduce(
               (sum, item) => sum + item.price.amount * item.quantity,
@@ -97,7 +95,7 @@ export default function SellerOrders() {
                     <span className="tnum text-[14px] font-medium">
                       {order._id.slice(-12).toUpperCase()}
                     </span>
-                    <span className="text-[13px] text-[var(--ink-muted)]">
+                    <span className="text-[13px] text-ink-muted">
                       {formatDate(order.createdAt)}
                       {order.user &&
                         ` · ${order.user.fullName?.firstName ?? order.user.username}`}
@@ -116,7 +114,7 @@ export default function SellerOrders() {
                   {order.items.map((item, index) => (
                     <li
                       key={`${item.product}-${index}`}
-                      className="text-[13px] text-[var(--ink-muted)]"
+                      className="text-[13px] text-ink-muted"
                     >
                       <span className="tnum">×{item.quantity}</span> ·{" "}
                       {formatMoney(item.price.amount, item.price.currency)} each
@@ -125,7 +123,7 @@ export default function SellerOrders() {
                 </ul>
 
                 {order.shippingAddress && (
-                  <address className="text-[13px] not-italic text-[var(--ink-subtle)]">
+                  <address className="text-[13px] not-italic text-ink-subtle">
                     Ships to {order.shippingAddress.city},{" "}
                     {order.shippingAddress.state} {order.shippingAddress.zip}
                   </address>

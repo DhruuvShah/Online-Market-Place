@@ -45,7 +45,7 @@ export default function OrderSuccess() {
 
       <motion.p
         {...rise(0.8)}
-        className="tnum mt-3 text-[14px] text-[var(--ink-muted)]"
+        className="tnum mt-3 text-[14px] text-ink-muted"
       >
         {id.slice(-12).toUpperCase()}
       </motion.p>
@@ -63,7 +63,7 @@ export default function OrderSuccess() {
       {order && (
         <motion.div
           {...rise(1)}
-          className="mt-10 w-full max-w-sm rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--raised)] p-6 text-left"
+          className="mt-10 w-full max-w-sm rounded-md border border-line bg-raised p-6 text-left"
         >
           <ul className="flex flex-col gap-3">
             {order.items.map((item, index) => (
@@ -71,7 +71,7 @@ export default function OrderSuccess() {
                 key={`${item.product}-${index}`}
                 className="flex justify-between gap-4 text-[14px]"
               >
-                <span className="text-[var(--ink-muted)]">
+                <span className="text-ink-muted">
                   Item ×{item.quantity}
                 </span>
                 <span className="tnum">
@@ -84,7 +84,7 @@ export default function OrderSuccess() {
             ))}
           </ul>
 
-          <div className="mt-4 flex justify-between border-t border-[var(--border)] pt-4">
+          <div className="mt-4 flex justify-between border-t border-line pt-4">
             <span className="font-medium">Total</span>
             <span className="tnum">
               {formatMoney(order.totalPrice.amount, order.totalPrice.currency)}
@@ -95,7 +95,7 @@ export default function OrderSuccess() {
 
       <motion.p
         {...rise(1.1)}
-        className="mt-8 max-w-sm text-[13px] leading-relaxed text-[var(--ink-subtle)]"
+        className="mt-8 max-w-sm text-[13px] leading-relaxed text-ink-subtle"
       >
         {stillWaiting
           ? "Payment confirmation arrives by webhook and can take a few seconds. You can safely leave this page."

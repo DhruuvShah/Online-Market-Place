@@ -34,7 +34,6 @@ async function initSocketServer(httpServer) {
   });
 
   io.on("connection", (socket) => {
-    console.log(socket.user, socket.token);
 
     socket.on("message", async (data) => {
       const agentResponse = await agent.invoke(
@@ -55,8 +54,6 @@ async function initSocketServer(httpServer) {
 
       const lastMessage =
         agentResponse.messages[agentResponse.messages.length - 1];
-
-      console.log("Emitting message to client:", lastMessage.content);
 
       socket.emit("message", lastMessage.content);
     });

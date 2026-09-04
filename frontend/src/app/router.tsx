@@ -10,6 +10,8 @@ const Landing = lazy(() => import("@/pages/public/Landing"));
 const Login = lazy(() => import("@/pages/public/Login"));
 const Register = lazy(() => import("@/pages/public/Register"));
 const NotFound = lazy(() => import("@/pages/public/NotFound"));
+const Privacy = lazy(() => import("@/pages/public/Privacy"));
+const Terms = lazy(() => import("@/pages/public/Terms"));
 
 const Discover = lazy(() => import("@/pages/shop/Discover"));
 const ProductDetail = lazy(() => import("@/pages/shop/ProductDetail"));
@@ -32,6 +34,8 @@ export function Router() {
       <Routes>
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Landing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

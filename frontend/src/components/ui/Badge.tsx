@@ -3,11 +3,11 @@ import type { ReactNode } from "react";
 type Tone = "ok" | "warn" | "danger" | "muted" | "accent";
 
 const tones: Record<Tone, string> = {
-  ok: "border-[var(--border-strong)] text-[var(--ink-muted)]",
-  warn: "border-[var(--honey)] text-[var(--honey)]",
-  danger: "border-[var(--accent)] text-[var(--accent)]",
-  muted: "border-[var(--border)] text-[var(--ink-subtle)]",
-  accent: "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]",
+  ok: "border-line-strong text-ink-muted",
+  warn: "border-honey text-honey",
+  danger: "border-accent text-accent",
+  muted: "border-line text-ink-subtle",
+  accent: "border-accent bg-accent text-accent-contrast",
 };
 
 export function Badge({ tone = "muted", children }: { tone?: Tone; children: ReactNode }) {

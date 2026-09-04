@@ -15,7 +15,7 @@ export type RazorpayOptions = {
   order_id: string;
   prefill?: { name?: string; email?: string };
   theme?: { color?: string };
-  handler: (response: RazorpayHandlerResponse) => void;
+  handler: (response: RazorpayHandlerResponse) => void | Promise<void>;
   modal?: { ondismiss?: () => void };
 };
 

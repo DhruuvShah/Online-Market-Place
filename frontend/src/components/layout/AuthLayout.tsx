@@ -11,29 +11,29 @@ const marks = [
 export function AuthLayout() {
   return (
     <div className="min-h-dvh overflow-x-clip lg:grid lg:grid-cols-[1fr_minmax(28rem,38%)]">
-      <aside className="hidden flex-col justify-between bg-[var(--ink)] p-12 lg:flex">
+      <aside className="hidden flex-col justify-between bg-ink p-12 lg:flex">
         <Link to="/" aria-label="HiveMind home">
-          <Logo className="text-[var(--canvas)]" />
+          <Logo className="text-canvas" />
         </Link>
 
         <div>
-          <p className="font-display max-w-[16ch] text-4xl leading-[1.05] text-[var(--canvas)]">
+          <p className="font-display max-w-[16ch] text-4xl leading-[1.05] text-canvas">
             A marketplace built by many hands
           </p>
           <ul className="mt-10 space-y-3">
             {marks.map((mark) => (
               <li
                 key={mark}
-                className="flex items-start gap-3 text-[14px] text-[var(--ink-subtle)]"
+                className="flex items-start gap-3 text-[14px] text-ink-subtle"
               >
-                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[var(--accent)]" />
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
                 {mark}
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="text-eyebrow text-[var(--ink-subtle)]">
+        <p className="text-eyebrow text-ink-subtle">
           Independent sellers · One marketplace
         </p>
       </aside>

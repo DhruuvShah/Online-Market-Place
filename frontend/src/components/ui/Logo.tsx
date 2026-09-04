@@ -20,7 +20,7 @@ export function Logo({ className = "", withWordmark = true }: Props) {
         />
         <path
           d="M22.5 12.25 L22.5 19.75 L16 23.5 L9.5 19.75 L9.5 12.25 L16 8.5"
-          stroke="var(--accent)"
+          stroke="var(--color-accent)"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"

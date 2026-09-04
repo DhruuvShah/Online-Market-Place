@@ -15,7 +15,7 @@ import { FormAlert } from "@/components/ui/FormAlert";
 import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { getErrorMessage } from "@/lib/errors";
 
 const profileSchema = z.object({
@@ -82,7 +82,7 @@ function ProfileSection() {
         <Badge>{user.role === "seller" ? "Seller" : "Shopper"}</Badge>
       </div>
 
-      <form onSubmit={handleSubmit(save)} className="mt-6 flex flex-col gap-5">
+      <form onSubmit={(event) => void handleSubmit(save)(event)} className="mt-6 flex flex-col gap-5">
         <FormAlert message={alert} />
 
         <div className="grid gap-5 sm:grid-cols-2">
@@ -156,7 +156,7 @@ function AddressSection() {
   };
 
   return (
-    <section className="mt-16 border-t border-[var(--border)] pt-12">
+    <section className="mt-16 border-t border-line pt-12">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-title text-lg font-medium">Addresses</h2>
         {!open && (
@@ -168,7 +168,7 @@ function AddressSection() {
       </div>
 
       {addresses.length === 0 && !open && (
-        <p className="mt-5 text-[14px] text-[var(--ink-muted)]">
+        <p className="mt-5 text-[14px] text-ink-muted">
           No saved addresses. You can also enter one during checkout.
         </p>
       )}
@@ -178,7 +178,7 @@ function AddressSection() {
           {addresses.map((address) => (
             <li
               key={address._id}
-              className="flex items-start justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--border)] p-5"
+              className="flex items-start justify-between gap-4 rounded-md border border-line p-5"
             >
               <address className="text-[14px] not-italic leading-relaxed">
                 {address.street}
@@ -193,9 +193,9 @@ function AddressSection() {
                 )}
               </address>
               <button
-                onClick={() => remove(address._id)}
+                onClick={() => void remove(address._id)}
                 aria-label="Remove address"
-                className="text-[var(--ink-subtle)] transition-colors hover:text-[var(--accent)]"
+                className="text-ink-subtle transition-colors hover:text-accent"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -206,8 +206,8 @@ function AddressSection() {
 
       {open && (
         <form
-          onSubmit={handleSubmit(add)}
-          className="mt-6 flex max-w-lg flex-col gap-5 rounded-[var(--radius-md)] border border-[var(--border)] p-6"
+          onSubmit={(event) => void handleSubmit(add)(event)}
+          className="mt-6 flex max-w-lg flex-col gap-5 rounded-md border border-line p-6"
         >
           <FormAlert message={alert} />
 
@@ -256,7 +256,7 @@ function AddressSection() {
 export default function Account() {
   return (
     <div className="shell max-w-3xl py-12 sm:py-16">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">Account</p>
+      <p className="text-eyebrow text-ink-subtle">Account</p>
       <h1 className="text-section mt-4 mb-12">Your details</h1>
 
       <ProfileSection />

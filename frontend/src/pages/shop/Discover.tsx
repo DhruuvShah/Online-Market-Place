@@ -18,6 +18,11 @@ export default function Discover() {
   const [maxPrice, setMaxPrice] = useState(params.get("maxprice") ?? "");
   const [page, setPage] = useState(0);
 
+  const changeFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setPage(0);
+  };
+
   const debouncedTerm = useDebounced(term, 350);
   const debouncedMin = useDebounced(minPrice, 500);
   const debouncedMax = useDebounced(maxPrice, 500);
@@ -28,7 +33,6 @@ export default function Discover() {
     if (debouncedMin) next.set("minprice", debouncedMin);
     if (debouncedMax) next.set("maxprice", debouncedMax);
     setParams(next, { replace: true });
-    setPage(0);
   }, [debouncedTerm, debouncedMin, debouncedMax, setParams]);
 
   const query = useMemo(
@@ -64,16 +68,16 @@ export default function Discover() {
   return (
     <div className="shell py-12 sm:py-16">
       <header>
-        <p className="text-eyebrow text-[var(--ink-subtle)]">Catalog</p>
+        <p className="text-eyebrow text-ink-subtle">Catalog</p>
         <h1 className="text-section mt-4">Discover</h1>
       </header>
 
       <div className="mt-9 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[var(--ink-subtle)]" />
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
           <Input
             value={term}
-            onChange={(event) => setTerm(event.target.value)}
+            onChange={(event) => changeFilter(setTerm)(event.target.value)}
             placeholder="Search products"
             aria-label="Search products"
             className="pl-10"
@@ -81,7 +85,9 @@ export default function Discover() {
         </div>
         <Input
           value={minPrice}
-          onChange={(event) => setMinPrice(event.target.value.replace(/\D/g, ""))}
+          onChange={(event) =>
+            changeFilter(setMinPrice)(event.target.value.replace(/\D/g, ""))
+          }
           placeholder="Min ₹"
           aria-label="Minimum price"
           inputMode="numeric"
@@ -89,7 +95,9 @@ export default function Discover() {
         />
         <Input
           value={maxPrice}
-          onChange={(event) => setMaxPrice(event.target.value.replace(/\D/g, ""))}
+          onChange={(event) =>
+            changeFilter(setMaxPrice)(event.target.value.replace(/\D/g, ""))
+          }
           placeholder="Max ₹"
           aria-label="Maximum price"
           inputMode="numeric"
@@ -102,14 +110,14 @@ export default function Discover() {
           <button
             key={filter.key}
             onClick={filter.clear}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-strong)] py-1 pr-2 pl-3 text-[13px] transition-colors hover:border-[var(--ink)]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line-strong py-1 pr-2 pl-3 text-[13px] transition-colors hover:border-ink"
           >
             {filter.label}
             <X className="h-3 w-3" />
           </button>
         ))}
 
-        <p className="text-[13px] text-[var(--ink-muted)]">
+        <p className="text-[13px] text-ink-muted">
           {isLoading
             ? "Searching…"
             : `${results.length} ${results.length === 1 ? "product" : "products"}${
@@ -122,7 +130,7 @@ export default function Discover() {
         <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-9 md:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex flex-col gap-3.5">
-              <Skeleton className="aspect-square rounded-[var(--radius-md)]" />
+              <Skeleton className="aspect-square rounded-md" />
               <Skeleton className="h-4 w-3/4" />
             </div>
           ))}
@@ -159,7 +167,7 @@ export default function Discover() {
             ))}
           </div>
 
-          <div className="mt-14 flex items-center justify-between border-t border-[var(--border)] pt-6">
+          <div className="mt-14 flex items-center justify-between border-t border-line pt-6">
             <Button
               variant="secondary"
               disabled={page === 0}
@@ -167,7 +175,7 @@ export default function Discover() {
             >
               Previous
             </Button>
-            <span className="tnum text-[13px] text-[var(--ink-muted)]">
+            <span className="tnum text-[13px] text-ink-muted">
               Page {page + 1}
             </span>
             <Button

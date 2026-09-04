@@ -22,12 +22,12 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border)] bg-[var(--sunken)]">
+    <footer className="border-t border-line bg-sunken">
       <div className="shell py-14">
         <div className="flex flex-col gap-10 md:flex-row md:justify-between">
           <div className="max-w-xs">
             <Logo />
-            <p className="mt-4 text-sm leading-relaxed text-[var(--ink-muted)]">
+            <p className="mt-4 text-sm leading-relaxed text-ink-muted">
               A marketplace where independent sellers list their work and buyers
               find it. Built as nine services that each do one job.
             </p>
@@ -36,7 +36,7 @@ export function Footer() {
           <div className="flex flex-wrap gap-10 sm:gap-14">
             {columns.map((column) => (
               <div key={column.title}>
-                <h3 className="text-xs font-semibold tracking-wide text-[var(--ink-muted)] uppercase">
+                <h3 className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
                   {column.title}
                 </h3>
                 <ul className="mt-4 space-y-3">
@@ -44,7 +44,7 @@ export function Footer() {
                     <li key={link.label}>
                       <Link
                         to={link.to}
-                        className="text-sm text-[var(--ink)] transition-colors hover:text-[var(--accent)]"
+                        className="text-sm text-ink transition-colors hover:text-accent"
                       >
                         {link.label}
                       </Link>
@@ -56,15 +56,15 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-[var(--border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-[var(--ink-muted)]">
+        <div className="mt-12 flex flex-col gap-4 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-ink-muted">
             © {new Date().getFullYear()} HiveMind. Payments processed by
             Razorpay.
           </p>
 
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="inline-flex items-center gap-1.5 text-xs text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+            className="inline-flex items-center gap-1.5 text-xs text-ink-muted transition-colors hover:text-ink"
           >
             Back to top
             <ArrowUp className="h-3.5 w-3.5" />

@@ -18,7 +18,7 @@ export function Header() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
         scrolled
-          ? "border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--canvas)_72%,transparent)] backdrop-blur-xl backdrop-saturate-150"
+          ? "border-b border-line bg-[color-mix(in_srgb,var(--color-canvas)_72%,transparent)] backdrop-blur-xl backdrop-saturate-150"
           : "border-b border-transparent"
       }`}
     >
@@ -27,14 +27,14 @@ export function Header() {
           <Logo className="[&_span:last-child]:hidden min-[380px]:[&_span:last-child]:inline" />
         </Link>
 
-        <div className="hidden items-center gap-8 text-sm text-[var(--ink-muted)] lg:flex">
-          <a href="#benefits" className="transition-colors hover:text-[var(--ink)]">
+        <div className="hidden items-center gap-8 text-sm text-ink-muted lg:flex">
+          <a href="#benefits" className="transition-colors hover:text-ink">
             Why HiveMind
           </a>
-          <a href="#how" className="transition-colors hover:text-[var(--ink)]">
+          <a href="#how" className="transition-colors hover:text-ink">
             How it works
           </a>
-          <a href="#trust" className="transition-colors hover:text-[var(--ink)]">
+          <a href="#trust" className="transition-colors hover:text-ink">
             Trust
           </a>
         </div>

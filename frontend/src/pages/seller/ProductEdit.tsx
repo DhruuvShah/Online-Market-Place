@@ -11,7 +11,7 @@ import { FormAlert } from "@/components/ui/FormAlert";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { getErrorMessage } from "@/lib/errors";
 
 const schema = z.object({
@@ -85,7 +85,7 @@ export default function ProductEdit() {
         },
       }).unwrap();
       notify("Product updated");
-      navigate("/seller/products");
+      void navigate("/seller/products");
     } catch (error) {
       setAlert(getErrorMessage(error, "Could not update this product."));
     }
@@ -95,7 +95,7 @@ export default function ProductEdit() {
     <div className="shell max-w-2xl py-12 sm:py-16">
       <Link
         to="/seller/products"
-        className="inline-flex items-center gap-1.5 text-[14px] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+        className="inline-flex items-center gap-1.5 text-[14px] text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Products
@@ -103,7 +103,7 @@ export default function ProductEdit() {
 
       <h1 className="text-section mt-6">Edit product</h1>
 
-      <form onSubmit={handleSubmit(submit)} className="mt-9 flex flex-col gap-6">
+      <form onSubmit={(event) => void handleSubmit(submit)(event)} className="mt-9 flex flex-col gap-6">
         <FormAlert message={alert} />
 
         <Field label="Title" htmlFor="title" error={errors.title?.message}>
@@ -114,7 +114,7 @@ export default function ProductEdit() {
           <textarea
             id="description"
             rows={4}
-            className="w-full resize-y rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--raised)] px-3.5 py-3 text-[15px] transition-colors focus:outline-none focus-visible:border-[var(--ink)]"
+            className="w-full resize-y rounded-sm border border-line-strong bg-raised px-3.5 py-3 text-[15px] transition-colors focus:outline-none focus-visible:border-ink"
             {...register("description")}
           />
         </Field>
@@ -145,7 +145,7 @@ export default function ProductEdit() {
           </Field>
         </div>
 
-        <p className="text-[13px] leading-relaxed text-[var(--ink-subtle)]">
+        <p className="text-[13px] leading-relaxed text-ink-subtle">
           Images cannot be changed after publishing. Delete and relist to
           replace them.
         </p>

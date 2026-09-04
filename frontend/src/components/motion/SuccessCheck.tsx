@@ -6,10 +6,10 @@ export function SuccessCheck({ size = 84 }: { size?: number }) {
   if (reduced) {
     return (
       <svg width={size} height={size} viewBox="0 0 84 84" fill="none" aria-hidden="true">
-        <circle cx="42" cy="42" r="38" stroke="var(--accent)" strokeWidth="3" />
+        <circle cx="42" cy="42" r="38" stroke="var(--color-accent)" strokeWidth="3" />
         <path
           d="M26 43.5 L37 54 L58 31"
-          stroke="var(--accent)"
+          stroke="var(--color-accent)"
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -24,7 +24,7 @@ export function SuccessCheck({ size = 84 }: { size?: number }) {
         cx="42"
         cy="42"
         r="38"
-        stroke="var(--accent)"
+        stroke="var(--color-accent)"
         strokeWidth="3"
         strokeLinecap="round"
         initial={{ pathLength: 0, rotate: -90 }}
@@ -34,7 +34,7 @@ export function SuccessCheck({ size = 84 }: { size?: number }) {
       />
       <motion.path
         d="M26 43.5 L37 54 L58 31"
-        stroke="var(--accent)"
+        stroke="var(--color-accent)"
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -50,7 +50,7 @@ export function SuccessCheck({ size = 84 }: { size?: number }) {
             cx="42"
             cy="42"
             r="2"
-            fill="var(--accent)"
+            fill="var(--color-accent)"
             initial={{ opacity: 0, x: 0, y: 0, scale: 1 }}
             animate={{
               opacity: [0, 1, 0],

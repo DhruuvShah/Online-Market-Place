@@ -14,17 +14,17 @@ export function Field({ label, htmlFor, error, hint, children }: FieldProps) {
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={htmlFor}
-        className="text-[13px] font-medium text-[var(--ink)]"
+        className="text-[13px] font-medium text-ink"
       >
         {label}
       </label>
       {children}
       {error ? (
-        <p role="alert" className="text-[13px] text-[var(--accent)]">
+        <p role="alert" className="text-[13px] text-accent">
           {error}
         </p>
       ) : hint ? (
-        <p className="text-[13px] text-[var(--ink-subtle)]">{hint}</p>
+        <p className="text-[13px] text-ink-subtle">{hint}</p>
       ) : null}
     </div>
   );
@@ -37,8 +37,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     <input
       ref={ref}
       aria-invalid={invalid || undefined}
-      className={`h-11 w-full rounded-[var(--radius-sm)] border bg-[var(--raised)] px-3.5 text-[15px] text-[var(--ink)] transition-colors placeholder:text-[var(--ink-subtle)] focus:outline-none focus-visible:border-[var(--ink)] ${
-        invalid ? "border-[var(--accent)]" : "border-[var(--border-strong)]"
+      className={`h-11 w-full rounded-sm border bg-raised px-3.5 text-[15px] text-ink transition-colors placeholder:text-ink-subtle focus:outline-none focus-visible:border-ink ${
+        invalid ? "border-accent" : "border-line-strong"
       } ${className}`}
       {...props}
     />

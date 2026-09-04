@@ -82,7 +82,7 @@ export default function Landing() {
           <motion.p
             variants={rise}
             transition={spring.ui}
-            className="text-eyebrow text-[var(--ink-subtle)]"
+            className="text-eyebrow text-ink-subtle"
           >
             Independent sellers · One marketplace
           </motion.p>
@@ -95,11 +95,11 @@ export default function Landing() {
             A marketplace built by many hands
           </motion.h1>
 
-          <div className="mt-12 grid gap-10 border-t border-[var(--border)] pt-10 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="mt-12 grid gap-10 border-t border-line pt-10 md:grid-cols-[1fr_auto] md:items-end">
             <motion.p
               variants={rise}
               transition={spring.ui}
-              className="max-w-md text-[17px] leading-relaxed text-[var(--ink-muted)]"
+              className="max-w-md text-[17px] leading-relaxed text-ink-muted"
             >
               Independent sellers list what they make. You find it, buy it, and
               it ships. No opaque ranking deciding who gets seen.
@@ -128,15 +128,15 @@ export default function Landing() {
       </section>
 
       <section className="shell">
-        <div className="grid grid-cols-2 border-t border-[var(--border)] md:grid-cols-4">
+        <div className="grid grid-cols-2 border-t border-line md:grid-cols-4">
           {stats.map((stat, i) => (
             <ScrollReveal
               key={stat.label}
               delay={i * 0.05}
-              className="border-b border-[var(--border)] py-9 not-last:border-r"
+              className="border-b border-line py-9 not-last:border-r"
             >
               <div className="tnum text-4xl font-medium">{stat.value}</div>
-              <div className="mt-2 text-[13px] text-[var(--ink-muted)]">
+              <div className="mt-2 text-[13px] text-ink-muted">
                 {stat.label}
               </div>
             </ScrollReveal>
@@ -146,23 +146,23 @@ export default function Landing() {
 
       <section id="benefits" className="shell py-24 sm:py-32">
         <ScrollReveal>
-          <p className="text-eyebrow text-[var(--ink-subtle)]">Why HiveMind</p>
+          <p className="text-eyebrow text-ink-subtle">Why HiveMind</p>
           <h2 className="text-section mt-5 max-w-[18ch]">
             The boring parts, done properly
           </h2>
         </ScrollReveal>
 
-        <div className="mt-16 grid gap-px bg-[var(--border)] md:grid-cols-3">
+        <div className="mt-16 grid gap-px bg-line md:grid-cols-3">
           {benefits.map((benefit, i) => (
             <ScrollReveal key={benefit.title} delay={i * 0.08}>
-              <div className="h-full bg-[var(--canvas)] p-8 sm:p-10">
-                <span className="tnum text-sm text-[var(--accent)]">
+              <div className="h-full bg-canvas p-8 sm:p-10">
+                <span className="tnum text-sm text-accent">
                   {benefit.n}
                 </span>
                 <h3 className="text-title mt-6 text-xl font-medium">
                   {benefit.title}
                 </h3>
-                <p className="mt-4 text-[15px] leading-relaxed text-[var(--ink-muted)]">
+                <p className="mt-4 text-[15px] leading-relaxed text-ink-muted">
                   {benefit.body}
                 </p>
               </div>
@@ -173,23 +173,23 @@ export default function Landing() {
 
       <section
         id="how"
-        className="border-y border-[var(--border)] bg-[var(--sunken)]"
+        className="border-y border-line bg-sunken"
       >
         <div className="shell py-24 sm:py-32">
           <ScrollReveal>
-            <p className="text-eyebrow text-[var(--ink-subtle)]">How it works</p>
+            <p className="text-eyebrow text-ink-subtle">How it works</p>
             <h2 className="text-section mt-5">Three steps, no surprises</h2>
           </ScrollReveal>
 
           <div className="mt-16 grid gap-12 md:grid-cols-3 md:gap-10">
             {steps.map((step, i) => (
               <ScrollReveal key={step.n} delay={i * 0.08}>
-                <div className="border-t border-[var(--border-strong)] pt-6">
-                  <span className="tnum text-sm text-[var(--accent)]">
+                <div className="border-t border-line-strong pt-6">
+                  <span className="tnum text-sm text-accent">
                     {step.n}
                   </span>
                   <h3 className="font-display mt-4 text-2xl">{step.title}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-[var(--ink-muted)]">
+                  <p className="mt-3 text-[15px] leading-relaxed text-ink-muted">
                     {step.body}
                   </p>
                 </div>
@@ -201,16 +201,16 @@ export default function Landing() {
 
       <section id="trust" className="shell py-24 sm:py-32">
         <ScrollReveal>
-          <p className="text-eyebrow text-[var(--ink-subtle)]">Trust</p>
+          <p className="text-eyebrow text-ink-subtle">Trust</p>
           <h2 className="text-section mt-5">Reasonable questions</h2>
         </ScrollReveal>
 
-        <dl className="mt-14 border-t border-[var(--border)]">
+        <dl className="mt-14 border-t border-line">
           {objections.map((item, i) => (
             <ScrollReveal key={item.q} delay={i * 0.06}>
-              <div className="grid gap-3 border-b border-[var(--border)] py-9 md:grid-cols-[22rem_1fr] md:gap-12">
+              <div className="grid gap-3 border-b border-line py-9 md:grid-cols-[22rem_1fr] md:gap-12">
                 <dt className="font-display text-xl">{item.q}</dt>
-                <dd className="max-w-xl text-[15px] leading-relaxed text-[var(--ink-muted)]">
+                <dd className="max-w-xl text-[15px] leading-relaxed text-ink-muted">
                   {item.a}
                 </dd>
               </div>
@@ -221,11 +221,11 @@ export default function Landing() {
 
       <section className="shell pb-24 sm:pb-32">
         <ScrollReveal>
-          <div className="rounded-[var(--radius-lg)] bg-[var(--ink)] px-6 py-16 text-center sm:px-16 sm:py-24">
-            <h2 className="text-section mx-auto max-w-[16ch] text-[var(--canvas)]">
+          <div className="rounded-lg bg-ink px-6 py-16 text-center sm:px-16 sm:py-24">
+            <h2 className="text-section mx-auto max-w-[16ch] text-canvas">
               Buy something, or sell something
             </h2>
-            <p className="mx-auto mt-5 max-w-sm text-[15px] text-[var(--ink-subtle)]">
+            <p className="mx-auto mt-5 max-w-sm text-[15px] text-ink-subtle">
               One account. Pick a side when you sign up.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-3">
@@ -237,7 +237,7 @@ export default function Landing() {
               </Link>
               <Link
                 to="/login"
-                className="inline-flex h-12 items-center rounded-full border border-[var(--border-strong)] px-6 text-[15px] font-medium text-[var(--canvas)] transition-colors hover:border-[var(--canvas)]"
+                className="inline-flex h-12 items-center rounded-full border border-line-strong px-6 text-[15px] font-medium text-canvas transition-colors hover:border-canvas"
               >
                 I already have one
               </Link>

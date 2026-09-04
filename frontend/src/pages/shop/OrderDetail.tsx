@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { formatDate, formatMoney } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import type { OrderStatus } from "@/types";
@@ -72,8 +72,8 @@ export default function OrderDetail() {
   return (
     <div className="shell py-12 sm:py-16">
       <button
-        onClick={() => navigate("/orders")}
-        className="inline-flex items-center gap-1.5 text-[14px] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+        onClick={() => void navigate("/orders")}
+        className="inline-flex items-center gap-1.5 text-[14px] text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />
         Orders
@@ -84,7 +84,7 @@ export default function OrderDetail() {
           <h1 className="tnum text-2xl font-medium">
             {order._id.slice(-12).toUpperCase()}
           </h1>
-          <p className="mt-2 text-[14px] text-[var(--ink-muted)]">
+          <p className="mt-2 text-[14px] text-ink-muted">
             Placed {formatDate(order.createdAt)}
           </p>
         </div>
@@ -99,12 +99,12 @@ export default function OrderDetail() {
               <li key={stage} className="flex flex-col gap-2.5">
                 <span
                   className={`h-1 rounded-full ${
-                    reached ? "bg-[var(--accent)]" : "bg-[var(--border)]"
+                    reached ? "bg-accent" : "bg-line"
                   }`}
                 />
                 <span
                   className={`text-[12px] ${
-                    reached ? "text-[var(--ink)]" : "text-[var(--ink-subtle)]"
+                    reached ? "text-ink" : "text-ink-subtle"
                   }`}
                 >
                   {timelineLabels[stage]}
@@ -118,7 +118,7 @@ export default function OrderDetail() {
       <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-16">
         <div>
           <h2 className="text-title text-lg font-medium">Items</h2>
-          <ul className="mt-4 divide-y divide-[var(--border)] border-y border-[var(--border)]">
+          <ul className="mt-4 divide-y divide-line border-y border-line">
             {order.items.map((item, index) => (
               <li
                 key={`${item.product}-${index}`}
@@ -126,10 +126,10 @@ export default function OrderDetail() {
               >
                 <Link
                   to={`/products/${item.product}`}
-                  className="text-[14px] hover:text-[var(--accent)]"
+                  className="text-[14px] hover:text-accent"
                 >
                   View product
-                  <span className="tnum ml-2 text-[var(--ink-muted)]">
+                  <span className="tnum ml-2 text-ink-muted">
                     ×{item.quantity}
                   </span>
                 </Link>
@@ -148,7 +148,7 @@ export default function OrderDetail() {
               <h2 className="text-title mt-10 text-lg font-medium">
                 Shipping address
               </h2>
-              <address className="mt-3 text-[14px] not-italic leading-relaxed text-[var(--ink-muted)]">
+              <address className="mt-3 text-[14px] not-italic leading-relaxed text-ink-muted">
                 {order.shippingAddress.street}
                 <br />
                 {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
@@ -161,7 +161,7 @@ export default function OrderDetail() {
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--raised)] p-6">
+          <div className="rounded-md border border-line bg-raised p-6">
             <div className="flex justify-between">
               <span className="font-medium">Total</span>
               <span className="tnum text-lg">
@@ -175,7 +175,7 @@ export default function OrderDetail() {
             {canCancel && (
               <Button
                 variant="secondary"
-                onClick={cancel}
+                onClick={() => void cancel()}
                 disabled={isCancelling}
                 className="mt-6 w-full"
               >
@@ -185,7 +185,7 @@ export default function OrderDetail() {
             )}
 
             {cancelled && (
-              <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-muted)]">
+              <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
                 This order was cancelled and its stock returned to the catalog.
               </p>
             )}

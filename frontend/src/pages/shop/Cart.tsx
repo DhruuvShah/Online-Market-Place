@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
-import { useToast } from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 import { formatMoney, formatPrice } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import { spring } from "@/components/motion/springs";
@@ -46,12 +46,12 @@ function Line({ line }: { line: CartLine }) {
     <div className="flex gap-4 py-6 sm:gap-5">
       <Link
         to={`/products/${line.productId}`}
-        className="h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--sunken)] sm:h-24 sm:w-24"
+        className="h-20 w-20 shrink-0 overflow-hidden rounded-sm bg-sunken sm:h-24 sm:w-24"
       >
         {line.image ? (
           <img src={line.image} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="grid h-full place-items-center text-[var(--ink-subtle)]">
+          <div className="grid h-full place-items-center text-ink-subtle">
             <ImageOff className="h-5 w-5" strokeWidth={1.5} />
           </div>
         )}
@@ -61,7 +61,7 @@ function Line({ line }: { line: CartLine }) {
         <div className="flex items-start justify-between gap-4">
           <Link
             to={`/products/${line.productId}`}
-            className="text-title text-[15px] font-medium hover:text-[var(--accent)]"
+            className="text-title text-[15px] font-medium hover:text-accent"
           >
             {line.title ?? "Product unavailable"}
           </Link>
@@ -73,7 +73,7 @@ function Line({ line }: { line: CartLine }) {
         {unavailable ? (
           <Badge tone="danger">No longer available</Badge>
         ) : (
-          <span className="text-[13px] text-[var(--ink-muted)]">
+          <span className="text-[13px] text-ink-muted">
             {formatPrice(line.price)} each
           </span>
         )}
@@ -83,12 +83,12 @@ function Line({ line }: { line: CartLine }) {
         )}
 
         <div className="mt-1 flex items-center gap-3">
-          <div className="inline-flex items-center rounded-full border border-[var(--border-strong)]">
+          <div className="inline-flex items-center rounded-full border border-line-strong">
             <button
-              onClick={() => setQuantity(line.quantity - 1)}
+              onClick={() => void setQuantity(line.quantity - 1)}
               disabled={busy || line.quantity <= 1 || unavailable}
               aria-label="Decrease quantity"
-              className="grid h-8 w-8 place-items-center rounded-l-full transition-colors hover:bg-[var(--sunken)] disabled:opacity-40"
+              className="grid h-8 w-8 place-items-center rounded-l-full transition-colors hover:bg-sunken disabled:opacity-40"
             >
               <Minus className="h-3 w-3" />
             </button>
@@ -96,19 +96,19 @@ function Line({ line }: { line: CartLine }) {
               {line.quantity}
             </span>
             <button
-              onClick={() => setQuantity(line.quantity + 1)}
+              onClick={() => void setQuantity(line.quantity + 1)}
               disabled={busy || line.quantity >= max || unavailable}
               aria-label="Increase quantity"
-              className="grid h-8 w-8 place-items-center rounded-r-full transition-colors hover:bg-[var(--sunken)] disabled:opacity-40"
+              className="grid h-8 w-8 place-items-center rounded-r-full transition-colors hover:bg-sunken disabled:opacity-40"
             >
               <Plus className="h-3 w-3" />
             </button>
           </div>
 
           <button
-            onClick={remove}
+            onClick={() => void remove()}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 text-[13px] text-[var(--ink-muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-accent disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Remove
@@ -158,13 +158,13 @@ export default function Cart() {
 
   return (
     <div className="shell py-12 sm:py-16">
-      <p className="text-eyebrow text-[var(--ink-subtle)]">Cart</p>
+      <p className="text-eyebrow text-ink-subtle">Cart</p>
       <h1 className="text-section mt-4">
         {totals?.totalQuantity} {totals?.totalQuantity === 1 ? "item" : "items"}
       </h1>
 
       <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_20rem] lg:gap-16">
-        <div className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
+        <div className="divide-y divide-line border-y border-line">
           <AnimatePresence initial={false}>
             {lines.map((line) => (
               <motion.div
@@ -184,23 +184,23 @@ export default function Cart() {
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--raised)] p-6">
+          <div className="rounded-md border border-line bg-raised p-6">
             <h2 className="text-title font-medium">Summary</h2>
 
             <dl className="mt-5 flex flex-col gap-3 text-[14px]">
               <div className="flex justify-between">
-                <dt className="text-[var(--ink-muted)]">Subtotal</dt>
+                <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="tnum">
                   {formatMoney(totals?.subtotal ?? 0, totals?.currency)}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--ink-muted)]">Shipping</dt>
-                <dd className="text-[var(--ink-muted)]">At checkout</dd>
+                <dt className="text-ink-muted">Shipping</dt>
+                <dd className="text-ink-muted">At checkout</dd>
               </div>
             </dl>
 
-            <div className="mt-5 flex justify-between border-t border-[var(--border)] pt-5">
+            <div className="mt-5 flex justify-between border-t border-line pt-5">
               <span className="font-medium">Total</span>
               <span className="tnum text-lg">
                 {formatMoney(totals?.subtotal ?? 0, totals?.currency)}
@@ -214,12 +214,12 @@ export default function Cart() {
             </Link>
 
             {hasUnavailable && (
-              <p className="mt-3 text-[13px] text-[var(--accent)]">
+              <p className="mt-3 text-[13px] text-accent">
                 Remove unavailable items to continue.
               </p>
             )}
 
-            <p className="mt-4 text-[12px] leading-relaxed text-[var(--ink-subtle)]">
+            <p className="mt-4 text-[12px] leading-relaxed text-ink-subtle">
               Stock is reserved when you place the order, not now.
             </p>
           </div>

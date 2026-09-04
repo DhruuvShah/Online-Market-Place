@@ -45,7 +45,7 @@ export default function Login() {
       }).unwrap();
 
       const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? (user.role === "seller" ? "/seller" : "/discover"), {
+      void navigate(from ?? (user.role === "seller" ? "/seller" : "/discover"), {
         replace: true,
       });
     } catch (error) {
@@ -56,11 +56,11 @@ export default function Login() {
   return (
     <div>
       <h1 className="font-display text-4xl">Welcome back</h1>
-      <p className="mt-3 text-[15px] text-[var(--ink-muted)]">
+      <p className="mt-3 text-[15px] text-ink-muted">
         Sign in to keep shopping, or to manage your storefront.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-9 flex flex-col gap-5">
+      <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} className="mt-9 flex flex-col gap-5">
         <FormAlert message={alert} />
 
         <Field
@@ -98,11 +98,11 @@ export default function Login() {
         </Button>
       </form>
 
-      <p className="mt-8 text-[14px] text-[var(--ink-muted)]">
+      <p className="mt-8 text-[14px] text-ink-muted">
         New to HiveMind?{" "}
         <Link
           to="/register"
-          className="font-medium text-[var(--ink)] underline underline-offset-4 hover:text-[var(--accent)]"
+          className="font-medium text-ink underline underline-offset-4 hover:text-accent"
         >
           Create an account
         </Link>
