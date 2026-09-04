@@ -29,10 +29,10 @@
     "uuid": "8.0.0"
   },
   "devDependencies": {
-    "jest": "^29.6.1",
-    "mongodb-memory-server": "^8.12.1",
+    "jest": "^30.5.1",
+    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^2.0.20",
-    "supertest": "^6.2.4"
+    "supertest": "^7.2.2"
   },
   "jest": {
     "testEnvironment": "node",
@@ -42,6 +42,7 @@
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup/broker.js"
-    ]
+    ],
+    "testTimeout": 30000
   }
 }
