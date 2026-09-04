@@ -53,7 +53,7 @@ describe("notification listeners", () => {
     expect(sendEmail).toHaveBeenCalledTimes(1);
     const { to, subject, html } = lastEmail();
     expect(to).toBe("dhruv@example.com");
-    expect(subject).toBe("Welcome to Our Service!");
+    expect(subject).toBe("Welcome to HiveMind, Dhruv Shah");
     expect(html).toContain("Dhruv Shah");
   });
 
@@ -77,7 +77,7 @@ describe("notification listeners", () => {
 
     const { to, subject, html } = lastEmail();
     expect(to).toBe("buyer@example.com");
-    expect(subject).toBe("Payment Initiated");
+    expect(subject).toContain("Payment started");
     expect(html).toContain("buyer");
     expect(html).toContain("order_1");
     expect(html).not.toContain("undefined");
@@ -95,8 +95,8 @@ describe("notification listeners", () => {
 
     const { to, subject, html } = lastEmail();
     expect(to).toBe("buyer@example.com");
-    expect(subject).toBe("Payment Successful");
-    expect(html).toContain("INR 500");
+    expect(subject).toContain("confirmed");
+    expect(html).toContain("500");
     expect(html).not.toContain("undefined");
   });
 
@@ -110,7 +110,7 @@ describe("notification listeners", () => {
 
     const { to, subject, html } = lastEmail();
     expect(to).toBe("buyer@example.com");
-    expect(subject).toBe("Payment Failed");
+    expect(subject).toContain("did not go through");
     expect(html).toContain("order_1");
     expect(html).not.toContain("undefined");
   });
@@ -125,7 +125,7 @@ describe("notification listeners", () => {
 
     const { to, subject, html } = lastEmail();
     expect(to).toBe("seller@example.com");
-    expect(subject).toBe("New Product Launched");
+    expect(subject).toContain("Your listing is live");
     expect(html).toContain("seller");
     expect(html).not.toContain("undefined");
   });

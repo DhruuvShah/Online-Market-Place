@@ -16,7 +16,7 @@ const MAX_IMAGES = 5;
 
 const schema = z.object({
   title: z.string().trim().min(1, "Required"),
-  description: z.string().trim().optional(),
+  description: z.string().trim().max(500, "500 characters maximum").optional(),
   amount: z.coerce.number().positive("Must be greater than zero"),
   stock: z.coerce.number().int().min(0, "Cannot be negative"),
 });
@@ -66,8 +66,8 @@ export default function ProductNew() {
     const body = new FormData();
     body.append("title", values.title);
     if (values.description) body.append("description", values.description);
-    body.append("price[amount]", String(values.amount));
-    body.append("price[currency]", "INR");
+    body.append("priceAmount", String(values.amount));
+    body.append("priceCurrency", "INR");
     body.append("stock", String(values.stock));
     files.forEach((file) => body.append("images", file));
 

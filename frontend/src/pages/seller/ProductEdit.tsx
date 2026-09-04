@@ -16,7 +16,7 @@ import { getErrorMessage } from "@/lib/errors";
 
 const schema = z.object({
   title: z.string().trim().min(1, "Required"),
-  description: z.string().trim().optional(),
+  description: z.string().trim().max(500, "500 characters maximum").optional(),
   amount: z.coerce.number().positive("Must be greater than zero"),
   stock: z.coerce.number().int().min(0, "Cannot be negative"),
 });

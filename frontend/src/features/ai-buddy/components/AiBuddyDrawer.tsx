@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp, Sparkles, X } from "lucide-react";
 import { useAiBuddy } from "../hooks/useAiBuddy";
+import { BuddyMessage } from "./BuddyMessage";
+import { ThinkingIndicator } from "./ThinkingIndicator";
 import { spring } from "@/components/motion/springs";
 
 const suggestions = [
@@ -113,7 +115,7 @@ export function AiBuddyDrawer() {
                   </div>
                 ) : (
                   <ul className="flex flex-col gap-4">
-                    {messages.map((message) => (
+                    {messages.map((message, index) => (
                       <li
                         key={message.id}
                         className={
@@ -122,23 +124,33 @@ export function AiBuddyDrawer() {
                             : "flex justify-start"
                         }
                       >
-                        <span
-                          className={`max-w-[85%] rounded-md px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap ${
-                            message.from === "you"
-                              ? "bg-ink text-canvas"
-                              : "bg-raised border-line border"
-                          }`}
-                        >
-                          {message.text}
-                        </span>
+                        {message.from === "you" ? (
+                          <motion.span
+                            initial={
+                              reduced
+                                ? { opacity: 0 }
+                                : { opacity: 0, y: 8, scale: 0.985 }
+                            }
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+                            className="bg-ink text-canvas max-w-[85%] rounded-md px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap"
+                          >
+                            {message.text}
+                          </motion.span>
+                        ) : (
+                          <BuddyMessage
+                            text={message.text}
+                            animate={index === messages.length - 1}
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>
                 )}
 
-                {isThinking && (
-                  <p className="text-ink-subtle mt-4 text-[13px]">Thinking…</p>
-                )}
+                <AnimatePresence>
+                  {isThinking && <ThinkingIndicator />}
+                </AnimatePresence>
 
                 {connectionCopy[connection] && (
                   <p className="text-ink-subtle mt-4 text-[13px]">
