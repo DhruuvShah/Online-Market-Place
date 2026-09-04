@@ -1,0 +1,185 @@
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, SearchX, X } from "lucide-react";
+import { useProductsQuery } from "@/services/product.api";
+import { ProductCard } from "@/features/products/components/ProductCard";
+import { Input } from "@/components/ui/Field";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
+import { useDebounced } from "@/hooks/useDebounced";
+
+const PAGE_SIZE = 12;
+
+export default function Discover() {
+  const [params, setParams] = useSearchParams();
+  const [term, setTerm] = useState(params.get("q") ?? "");
+  const [minPrice, setMinPrice] = useState(params.get("minprice") ?? "");
+  const [maxPrice, setMaxPrice] = useState(params.get("maxprice") ?? "");
+  const [page, setPage] = useState(0);
+
+  const debouncedTerm = useDebounced(term, 350);
+  const debouncedMin = useDebounced(minPrice, 500);
+  const debouncedMax = useDebounced(maxPrice, 500);
+
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (debouncedTerm) next.set("q", debouncedTerm);
+    if (debouncedMin) next.set("minprice", debouncedMin);
+    if (debouncedMax) next.set("maxprice", debouncedMax);
+    setParams(next, { replace: true });
+    setPage(0);
+  }, [debouncedTerm, debouncedMin, debouncedMax, setParams]);
+
+  const query = useMemo(
+    () => ({
+      ...(debouncedTerm ? { q: debouncedTerm } : {}),
+      ...(debouncedMin ? { minprice: Number(debouncedMin) } : {}),
+      ...(debouncedMax ? { maxprice: Number(debouncedMax) } : {}),
+      skip: page * PAGE_SIZE,
+      limit: PAGE_SIZE,
+    }),
+    [debouncedTerm, debouncedMin, debouncedMax, page],
+  );
+
+  const { data: products, isFetching, isLoading } = useProductsQuery(query);
+
+  const activeFilters = [
+    debouncedTerm && { key: "q", label: `“${debouncedTerm}”`, clear: () => setTerm("") },
+    debouncedMin && {
+      key: "min",
+      label: `Min ₹${debouncedMin}`,
+      clear: () => setMinPrice(""),
+    },
+    debouncedMax && {
+      key: "max",
+      label: `Max ₹${debouncedMax}`,
+      clear: () => setMaxPrice(""),
+    },
+  ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
+
+  const hasFilters = activeFilters.length > 0;
+  const results = products ?? [];
+
+  return (
+    <div className="shell py-12 sm:py-16">
+      <header>
+        <p className="text-eyebrow text-[var(--ink-subtle)]">Catalog</p>
+        <h1 className="text-section mt-4">Discover</h1>
+      </header>
+
+      <div className="mt-9 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[var(--ink-subtle)]" />
+          <Input
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Search products"
+            aria-label="Search products"
+            className="pl-10"
+          />
+        </div>
+        <Input
+          value={minPrice}
+          onChange={(event) => setMinPrice(event.target.value.replace(/\D/g, ""))}
+          placeholder="Min ₹"
+          aria-label="Minimum price"
+          inputMode="numeric"
+          className="sm:w-28"
+        />
+        <Input
+          value={maxPrice}
+          onChange={(event) => setMaxPrice(event.target.value.replace(/\D/g, ""))}
+          placeholder="Max ₹"
+          aria-label="Maximum price"
+          inputMode="numeric"
+          className="sm:w-28"
+        />
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        {activeFilters.map((filter) => (
+          <button
+            key={filter.key}
+            onClick={filter.clear}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-strong)] py-1 pr-2 pl-3 text-[13px] transition-colors hover:border-[var(--ink)]"
+          >
+            {filter.label}
+            <X className="h-3 w-3" />
+          </button>
+        ))}
+
+        <p className="text-[13px] text-[var(--ink-muted)]">
+          {isLoading
+            ? "Searching…"
+            : `${results.length} ${results.length === 1 ? "product" : "products"}${
+                isFetching ? " · updating" : ""
+              }`}
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-9 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-3.5">
+              <Skeleton className="aspect-square rounded-[var(--radius-md)]" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
+        </div>
+      ) : results.length === 0 ? (
+        <EmptyState
+          icon={<SearchX className="h-8 w-8" strokeWidth={1.5} />}
+          title={hasFilters ? "No products match" : "Nothing listed yet"}
+          body={
+            hasFilters
+              ? "Try a broader search, or clear the filters to see everything in the catalog."
+              : "Sellers have not listed anything yet. Check back shortly."
+          }
+          action={
+            hasFilters ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setTerm("");
+                  setMinPrice("");
+                  setMaxPrice("");
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <>
+          <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-9 md:grid-cols-3 lg:grid-cols-4">
+            {results.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+
+          <div className="mt-14 flex items-center justify-between border-t border-[var(--border)] pt-6">
+            <Button
+              variant="secondary"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              Previous
+            </Button>
+            <span className="tnum text-[13px] text-[var(--ink-muted)]">
+              Page {page + 1}
+            </span>
+            <Button
+              variant="secondary"
+              disabled={results.length < PAGE_SIZE}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

@@ -21,6 +21,13 @@ router.get("/me", authMiddleware.authMiddleware, authController.getCurrentUser);
 
 router.get("/logout", authController.logoutUser);
 
+router.patch(
+  "/users/me",
+  authMiddleware.authMiddleware,
+  validators.updateUserProfileValidations,
+  authController.updateUserProfile
+);
+
 router.get(
   "/users/me/addresses",
   authMiddleware.authMiddleware,

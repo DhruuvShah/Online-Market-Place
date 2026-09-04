@@ -90,8 +90,32 @@ const addUserAddressValidations = [
   respondWithValidationErrors,
 ];
 
+const updateUserProfileValidations = [
+  body("username")
+    .optional()
+    .isString()
+    .withMessage("Username must be a string")
+    .isLength({ min: 3 })
+    .withMessage("Username must be at least 3 characters long"),
+  body("email").optional().isEmail().withMessage("Invalid email format"),
+  body("fullName.firstName")
+    .optional()
+    .isString()
+    .withMessage("First name must be a string")
+    .notEmpty()
+    .withMessage("First name is required"),
+  body("fullName.lastName")
+    .optional()
+    .isString()
+    .withMessage("Last name must be a string")
+    .notEmpty()
+    .withMessage("Last name is required"),
+  respondWithValidationErrors,
+];
+
 module.exports = {
   registerUserValidation,
   loginUserValidations,
   addUserAddressValidations,
+  updateUserProfileValidations,
 };

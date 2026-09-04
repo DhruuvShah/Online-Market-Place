@@ -232,11 +232,63 @@ async function deleteUserAddress(req, res) {
   });
 }
 
+async function updateUserProfile(req, res) {
+  const id = req.user.id;
+  const { username, email, fullName } = req.body;
+
+  const updates = {};
+
+  if (username !== undefined) updates.username = username;
+  if (email !== undefined) updates.email = email;
+  if (fullName && fullName.firstName !== undefined) {
+    updates["fullName.firstName"] = fullName.firstName;
+  }
+  if (fullName && fullName.lastName !== undefined) {
+    updates["fullName.lastName"] = fullName.lastName;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ message: "No updatable fields provided" });
+  }
+
+  const conflictFilters = [];
+  if (updates.username) conflictFilters.push({ username: updates.username });
+  if (updates.email) conflictFilters.push({ email: updates.email });
+
+  if (conflictFilters.length > 0) {
+    const conflict = await userModel.findOne({
+      _id: { $ne: id },
+      $or: conflictFilters,
+    });
+
+    if (conflict) {
+      return res
+        .status(409)
+        .json({ message: "Username or email is already in use" });
+    }
+  }
+
+  const user = await userModel.findOneAndUpdate({ _id: id }, updates, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  return res.status(200).json({
+    message: "Profile updated successfully",
+    user,
+  });
+}
+
 module.exports = {
   registerUser,
   loginUser,
   getCurrentUser,
   logoutUser,
+  updateUserProfile,
   getUserAddresses,
   addUserAddress,
   deleteUserAddress,
