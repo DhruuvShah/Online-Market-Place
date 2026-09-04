@@ -64,4 +64,19 @@ async function uploadImage({ buffer, filename }) {
   };
 }
 
-module.exports = { uploadImage };
+async function deleteImage(fileId) {
+  if (!fileId || String(fileId).startsWith("mock_")) return false;
+
+  const imagekit = getImageKit();
+  if (!imagekit) return false;
+
+  try {
+    await imagekit.files.delete(fileId);
+    return true;
+  } catch (err) {
+    console.error(`ImageKit delete failed for ${fileId}:`, err.message);
+    return false;
+  }
+}
+
+module.exports = { uploadImage, deleteImage };

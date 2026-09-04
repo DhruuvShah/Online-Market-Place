@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { useDebounced } from "@/hooks/useDebounced";
 
 const PAGE_SIZE = 12;
+const PROBE = PAGE_SIZE + 1;
 
 export default function Discover() {
   const [params, setParams] = useSearchParams();
@@ -41,12 +42,16 @@ export default function Discover() {
       ...(debouncedMin ? { minprice: Number(debouncedMin) } : {}),
       ...(debouncedMax ? { maxprice: Number(debouncedMax) } : {}),
       skip: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
+      limit: PROBE,
     }),
     [debouncedTerm, debouncedMin, debouncedMax, page],
   );
 
-  const { data: products, isFetching, isLoading } = useProductsQuery(query);
+  const { data, isFetching, isLoading } = useProductsQuery(query);
+
+  const fetched = data ?? [];
+  const results = fetched.slice(0, PAGE_SIZE);
+  const hasNextPage = fetched.length > PAGE_SIZE;
 
   const activeFilters = [
     debouncedTerm && { key: "q", label: `“${debouncedTerm}”`, clear: () => setTerm("") },
@@ -63,7 +68,6 @@ export default function Discover() {
   ].filter(Boolean) as { key: string; label: string; clear: () => void }[];
 
   const hasFilters = activeFilters.length > 0;
-  const results = products ?? [];
 
   return (
     <div className="shell py-12 sm:py-16">
@@ -135,6 +139,15 @@ export default function Discover() {
             </div>
           ))}
         </div>
+      ) : results.length === 0 && page > 0 ? (
+        <div className="mt-16 flex flex-col items-center gap-6 text-center">
+          <p className="text-ink-muted text-[15px]">
+            You have reached the end of the catalog.
+          </p>
+          <Button variant="secondary" onClick={() => setPage(0)}>
+            Back to the first page
+          </Button>
+        </div>
       ) : results.length === 0 ? (
         <EmptyState
           icon={<SearchX className="h-8 w-8" strokeWidth={1.5} />}
@@ -170,7 +183,7 @@ export default function Discover() {
           <div className="mt-14 flex items-center justify-between border-t border-line pt-6">
             <Button
               variant="secondary"
-              disabled={page === 0}
+              disabled={page === 0 || isFetching}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
               Previous
@@ -180,7 +193,7 @@ export default function Discover() {
             </span>
             <Button
               variant="secondary"
-              disabled={results.length < PAGE_SIZE}
+              disabled={!hasNextPage || isFetching}
               onClick={() => setPage((p) => p + 1)}
             >
               Next

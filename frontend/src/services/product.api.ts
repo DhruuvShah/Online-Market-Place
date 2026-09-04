@@ -53,6 +53,36 @@ export const productApi = baseApi.injectEndpoints({
       ],
     }),
 
+    addProductImages: builder.mutation<Product, { id: string; body: FormData }>({
+      query: ({ id, body }) => ({
+        url: `/api/products/${id}/images`,
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: { product: Product }) => response.product,
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Product", id },
+        "Product",
+        "SellerProduct",
+      ],
+    }),
+
+    deleteProductImage: builder.mutation<
+      Product,
+      { id: string; imageId: string }
+    >({
+      query: ({ id, imageId }) => ({
+        url: `/api/products/${id}/images/${imageId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: { product: Product }) => response.product,
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Product", id },
+        "Product",
+        "SellerProduct",
+      ],
+    }),
+
     deleteProduct: builder.mutation<{ message: string }, string>({
       query: (id) => ({ url: `/api/products/${id}`, method: "DELETE" }),
       invalidatesTags: ["Product", "SellerProduct", "SellerMetrics"],
@@ -64,6 +94,8 @@ export const {
   useProductsQuery,
   useProductQuery,
   useCreateProductMutation,
+  useAddProductImagesMutation,
+  useDeleteProductImageMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
 } = productApi;

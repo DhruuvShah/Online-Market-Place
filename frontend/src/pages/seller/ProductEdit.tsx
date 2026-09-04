@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/hooks/useToast";
+import { ProductImageManager } from "@/features/products/components/ProductImageManager";
 import { getErrorMessage } from "@/lib/errors";
 
 const schema = z.object({
@@ -145,10 +146,6 @@ export default function ProductEdit() {
           </Field>
         </div>
 
-        <p className="text-[13px] leading-relaxed text-ink-subtle">
-          Images cannot be changed after publishing. Delete and relist to
-          replace them.
-        </p>
 
         <Button
           type="submit"
@@ -160,6 +157,10 @@ export default function ProductEdit() {
           Save changes
         </Button>
       </form>
+
+      <div className="border-line mt-12 border-t pt-10">
+        <ProductImageManager productId={id} images={product.images ?? []} />
+      </div>
     </div>
   );
 }

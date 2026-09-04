@@ -1,5 +1,5 @@
 const productModel = require("../models/product.model");
-const { uploadImage } = require("../services/imagekit.service");
+const { uploadImage, deleteImage } = require("../services/imagekit.service");
 const { publishToOutbox } = require("../broker/outbox");
 const mongoose = require("mongoose");
 
@@ -194,6 +194,8 @@ async function deleteProduct(req, res) {
       .json({ message: "Forbidden: You can only delete your own products" });
   }
 
+  await Promise.all(product.images.map((image) => deleteImage(image.id)));
+
   await productModel.findOneAndDelete({ _id: id });
   return res.status(200).json({ message: "Product deleted" });
 }
@@ -269,8 +271,102 @@ async function releaseStock(req, res) {
   return res.status(200).json({ message: "Stock released" });
 }
 
+const MAX_IMAGES = 5;
+
+async function findOwnedProduct(id, sellerId) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return { error: { status: 400, message: "Invalid product id" } };
+  }
+
+  const product = await productModel.findById(id);
+
+  if (!product) {
+    return { error: { status: 404, message: "Product not found" } };
+  }
+
+  if (product.seller.toString() !== sellerId) {
+    return {
+      error: {
+        status: 403,
+        message: "Forbidden: You can only change your own products",
+      },
+    };
+  }
+
+  return { product };
+}
+
+async function addProductImages(req, res) {
+  const { product, error } = await findOwnedProduct(req.params.id, req.user.id);
+
+  if (error) {
+    return res.status(error.status).json({ message: error.message });
+  }
+
+  if (!req.files?.length) {
+    return res.status(400).json({ message: "No images provided" });
+  }
+
+  const remaining = MAX_IMAGES - product.images.length;
+
+  if (remaining <= 0) {
+    return res
+      .status(409)
+      .json({ message: `A product can have at most ${MAX_IMAGES} images` });
+  }
+
+  const uploaded = await Promise.all(
+    req.files.slice(0, remaining).map(async (file) => {
+      try {
+        return await uploadImage({
+          buffer: file.buffer,
+          filename: file.originalname,
+        });
+      } catch (err) {
+        console.error("Image upload failed:", err.message);
+        return null;
+      }
+    }),
+  );
+
+  const images = uploaded.filter(Boolean);
+
+  if (!images.length) {
+    return res.status(502).json({ message: "Image upload failed" });
+  }
+
+  product.images.push(...images);
+  await product.save();
+
+  return res.status(201).json({ message: "Images added", product });
+}
+
+async function deleteProductImage(req, res) {
+  const { product, error } = await findOwnedProduct(req.params.id, req.user.id);
+
+  if (error) {
+    return res.status(error.status).json({ message: error.message });
+  }
+
+  const { imageId } = req.params;
+  const image = product.images.find((item) => item.id === imageId);
+
+  if (!image) {
+    return res.status(404).json({ message: "Image not found" });
+  }
+
+  await deleteImage(image.id);
+
+  product.images = product.images.filter((item) => item.id !== imageId);
+  await product.save();
+
+  return res.status(200).json({ message: "Image deleted", product });
+}
+
 module.exports = {
   createProduct,
+  addProductImages,
+  deleteProductImage,
   getProducts,
   getProductById,
   updateProduct,

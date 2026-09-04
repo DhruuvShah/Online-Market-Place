@@ -51,6 +51,19 @@ router.delete(
   productController.deleteProduct,
 );
 
+router.post(
+  "/:id/images",
+  createAuthMiddleware(["seller"]),
+  upload.array("images", 5),
+  productController.addProductImages,
+);
+
+router.delete(
+  "/:id/images/:imageId",
+  createAuthMiddleware(["seller"]),
+  productController.deleteProductImage,
+);
+
 router.get(
   "/seller",
   createAuthMiddleware(["seller"]),
