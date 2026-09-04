@@ -22,6 +22,7 @@ jobs:
           - notification
           - ai-buddy
           - seller-dashboard
+          - gateway
 
     steps:
       - uses: actions/checkout@v4
