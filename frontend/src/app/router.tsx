@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { PublicLayout } from "@/components/layout/PublicLayout";
+import { SellerLayout } from "@/components/layout/SellerLayout";
 import { ShopLayout } from "@/components/layout/ShopLayout";
 import { RedirectIfAuthed, RequireRole } from "./guards";
 
@@ -18,6 +19,12 @@ const OrderSuccess = lazy(() => import("@/pages/shop/OrderSuccess"));
 const Orders = lazy(() => import("@/pages/shop/Orders"));
 const OrderDetail = lazy(() => import("@/pages/shop/OrderDetail"));
 const Account = lazy(() => import("@/pages/shop/Account"));
+
+const SellerOverview = lazy(() => import("@/pages/seller/Overview"));
+const SellerProducts = lazy(() => import("@/pages/seller/Products"));
+const SellerProductNew = lazy(() => import("@/pages/seller/ProductNew"));
+const SellerProductEdit = lazy(() => import("@/pages/seller/ProductEdit"));
+const SellerOrders = lazy(() => import("@/pages/seller/Orders"));
 
 export function Router() {
   return (
@@ -45,6 +52,20 @@ export function Router() {
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/orders/:id/success" element={<OrderSuccess />} />
             <Route path="/account" element={<Account />} />
+          </Route>
+        </Route>
+
+        <Route element={<RequireRole roles={["seller"]} />}>
+          <Route element={<SellerLayout />}>
+            <Route path="/seller" element={<SellerOverview />} />
+            <Route path="/seller/products" element={<SellerProducts />} />
+            <Route path="/seller/products/new" element={<SellerProductNew />} />
+            <Route
+              path="/seller/products/:id/edit"
+              element={<SellerProductEdit />}
+            />
+            <Route path="/seller/orders" element={<SellerOrders />} />
+            <Route path="/seller/account" element={<Account />} />
           </Route>
         </Route>
       </Routes>

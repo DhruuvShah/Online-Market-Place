@@ -50,8 +50,14 @@ describe("GET /api/auth/me", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.user).toBeDefined();
-    expect(res.body.user.id).toBe(user._id.toString());
+    expect(res.body.user._id).toBe(user._id.toString());
     expect(res.body.user.email).toBe("me@example.com");
     expect(res.body.user.username).toBe("me_user");
+    expect(res.body.user.fullName).toEqual({
+      firstName: "Me",
+      lastName: "User",
+    });
+    expect(res.body.user.addresses).toEqual([]);
+    expect(res.body.user.password).toBeUndefined();
   });
 });

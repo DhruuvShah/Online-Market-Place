@@ -123,9 +123,15 @@ async function loginUser(req, res) {
 }
 
 async function getCurrentUser(req, res) {
+  const user = await userModel.findById(req.user.id);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
   return res.status(200).json({
     message: "Current user fetched successfully",
-    user: req.user,
+    user,
   });
 }
 

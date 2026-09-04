@@ -1,6 +1,13 @@
 import type { Product } from "@/types";
 import { baseApi } from "./base.api";
 
+export type UpdateProductBody = {
+  title?: string;
+  description?: string;
+  price?: { amount: number; currency: "INR" | "USD" };
+  stock?: number;
+};
+
 export type ProductQuery = {
   q?: string;
   minprice?: number;
@@ -22,7 +29,41 @@ export const productApi = baseApi.injectEndpoints({
       transformResponse: (response: { data: Product }) => response.data,
       providesTags: (_result, _error, id) => [{ type: "Product", id }],
     }),
+
+    createProduct: builder.mutation<Product, FormData>({
+      query: (body) => ({ url: "/api/products", method: "POST", body }),
+      transformResponse: (response: { data: Product }) => response.data,
+      invalidatesTags: ["Product", "SellerProduct", "SellerMetrics"],
+    }),
+
+    updateProduct: builder.mutation<
+      Product,
+      { id: string; body: UpdateProductBody }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/products/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      transformResponse: (response: { product: Product }) => response.product,
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Product", id },
+        "Product",
+        "SellerProduct",
+      ],
+    }),
+
+    deleteProduct: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/products/${id}`, method: "DELETE" }),
+      invalidatesTags: ["Product", "SellerProduct", "SellerMetrics"],
+    }),
   }),
 });
 
-export const { useProductsQuery, useProductQuery } = productApi;
+export const {
+  useProductsQuery,
+  useProductQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
+} = productApi;
