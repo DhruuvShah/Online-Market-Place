@@ -192,3 +192,94 @@ describe("when the agent fails", () => {
     client.close();
   });
 });
+
+describe("telling the browser what the assistant changed", () => {
+  const { ToolMessage } = require("@langchain/core/messages");
+
+  const answerUsing = (...toolNames) =>
+    agent.invoke.mockResolvedValueOnce({
+      messages: [
+        ...toolNames.map(
+          (name) => new ToolMessage({ content: "done", name }),
+        ),
+        { content: "Added it to your cart." },
+      ],
+    });
+
+  /** Resolves with the actions if they arrive before the reply, else null. */
+  async function actionsFor(client, text) {
+    let actions = null;
+    client.on("assistant-actions", (tools) => {
+      actions = tools;
+    });
+
+    await new Promise((resolve) => {
+      client.on("message", resolve);
+      client.emit("message", text);
+    });
+
+    return actions;
+  }
+
+  it("names the tool it ran so the client can refresh what it touched", async () => {
+    answerUsing("addProductToCart");
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const actions = await actionsFor(client, "add the cheapest thing to my cart");
+    client.close();
+
+    expect(actions).toEqual(["addProductToCart"]);
+  });
+
+  it("stays quiet when the answer changed nothing", async () => {
+    const client = connect(authCookie());
+    await settle(client);
+
+    // The default mock reply carries no tool messages at all.
+    const actions = await actionsFor(client, "what do you sell?");
+    client.close();
+
+    expect(actions).toBeNull();
+  });
+
+  it("names a tool once however often it was called", async () => {
+    answerUsing("addProductToCart", "addProductToCart");
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const actions = await actionsFor(client, "add two of those");
+    client.close();
+
+    expect(actions).toEqual(["addProductToCart"]);
+  });
+
+  it("reports every distinct tool from one turn", async () => {
+    answerUsing("searchProduct", "addProductToCart");
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const actions = await actionsFor(client, "find a chair and add it");
+    client.close();
+
+    expect(actions).toEqual(["searchProduct", "addProductToCart"]);
+  });
+
+  it("still delivers the reply alongside the actions", async () => {
+    answerUsing("addProductToCart");
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const reply = await new Promise((resolve) => {
+      client.on("message", resolve);
+      client.emit("message", "add it");
+    });
+    client.close();
+
+    expect(reply).toBe("Added it to your cart.");
+  });
+});

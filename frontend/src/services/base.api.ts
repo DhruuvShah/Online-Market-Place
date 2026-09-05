@@ -16,6 +16,8 @@ export const TAGS = [
   "SellerOrder",
 ] as const;
 
+export type TagType = (typeof TAGS)[number];
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_URL ?? "http://localhost:8080",
   credentials: "include",
@@ -47,5 +49,15 @@ export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithRetry,
   tagTypes: TAGS,
+
+  // By default a cached answer is served without going back to the server, so
+  // walking from a product to the cart showed whatever the cart held when it
+  // was last opened. Data here also changes without the client doing anything
+  // — an order fulfils itself, the assistant fills the cart on the server —
+  // so nothing that arrives on screen is safe to assume is still true.
+  refetchOnMountOrArgChange: true,
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
+
   endpoints: () => ({}),
 });

@@ -39,31 +39,59 @@ function authStrategy() {
   return null;
 }
 
+// Gmail's submission ports. 465 is implicit TLS and is the default; 587 is
+// STARTTLS and is the one to try when a host blocks or drops 465, which some
+// networks do. Overridable so switching is a config change, not a deploy.
+const SMTP_HOST = process.env.EMAIL_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.EMAIL_PORT) || 465;
+
 function getTransporter() {
   if (transporter) return transporter;
 
   const auth = authStrategy();
   if (!auth) return null;
 
+  const secure = SMTP_PORT === 465;
+
   transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure,
+    // On 587 the connection starts in the clear, so insist it is upgraded
+    // rather than letting credentials go out unencrypted if STARTTLS is
+    // missing from the greeting.
+    requireTLS: !secure,
     auth,
     pool: true,
     maxConnections: 1,
     rateDelta: 1000,
     rateLimit: 3,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
   });
 
   return transporter;
 }
 
+// Network-level failures worth another go. ENETUNREACH and EHOSTUNREACH show
+// up when the host resolves to an address family it cannot actually route to,
+// which can differ between attempts if the resolver returns several addresses.
+const TRANSIENT_CODES = [
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNECTION",
+  "ESOCKET",
+  "ENETUNREACH",
+  "EHOSTUNREACH",
+  "EAI_AGAIN",
+  "EDNS",
+];
+
 function isTransient(error) {
   const code = Number(error.responseCode);
   if (code >= 400 && code < 500) return true;
 
-  return ["ETIMEDOUT", "ECONNRESET", "ECONNECTION", "ESOCKET"].includes(
-    error.code,
-  );
+  return TRANSIENT_CODES.includes(error.code);
 }
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -92,7 +120,14 @@ const sendEmail = async (to, subject, text, html) => {
       const retryable = isTransient(error) && attempt < MAX_ATTEMPTS;
 
       if (!retryable) {
-        console.error(`Failed to send "${subject}" to ${to}:`, error.message);
+        // The code and the message together name the host, port and address
+        // family that failed, which is what makes the next one diagnosable.
+        console.error(
+          `Failed to send "${subject}" to ${to} via ${SMTP_HOST}:${SMTP_PORT} [${
+            error.code || "no code"
+          }]:`,
+          error.message,
+        );
         return;
       }
 

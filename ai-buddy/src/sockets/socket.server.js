@@ -1,7 +1,27 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const cookie = require("cookie");
+const { ToolMessage } = require("@langchain/core/messages");
 const agent = require("../agent/agent");
+
+/**
+ * Names of the tools the assistant actually ran this turn.
+ *
+ * The assistant changes things through its own tools — it fills the cart by
+ * calling the cart service directly — so the browser has no idea anything
+ * happened. Telling it which tools ran lets it refresh exactly what changed
+ * instead of the user finding a stale cart and reaching for reload.
+ */
+function toolsUsedIn(messages = []) {
+  return [
+    ...new Set(
+      messages
+        .filter((message) => message instanceof ToolMessage)
+        .map((message) => message.name)
+        .filter(Boolean),
+    ),
+  ];
+}
 
 async function initSocketServer(httpServer) {
   const io = new Server(httpServer, {
@@ -58,6 +78,11 @@ async function initSocketServer(httpServer) {
 
         const lastMessage =
           agentResponse.messages[agentResponse.messages.length - 1];
+
+        // Announced before the reply so the cart is already refreshing by the
+        // time the user has read "added it for you" and gone to look.
+        const used = toolsUsedIn(agentResponse.messages);
+        if (used.length) socket.emit("assistant-actions", used);
 
         socket.emit("message", lastMessage.content);
       } catch (error) {

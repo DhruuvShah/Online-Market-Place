@@ -6,6 +6,9 @@ import {
   useSyncExternalStore,
 } from "react";
 import { getAiBuddySocket } from "@/services/aiBuddy.socket";
+import { useAppDispatch } from "@/app/hooks";
+import { baseApi } from "@/services/base.api";
+import { tagsForActions } from "../assistantActions";
 
 export type ChatMessage = {
   id: number;
@@ -31,6 +34,7 @@ export function useAiBuddy(active: boolean) {
   const [isThinking, setIsThinking] = useState(false);
   const [failed, setFailed] = useState(false);
   const nextId = useRef(0);
+  const dispatch = useAppDispatch();
 
   const connected = useSyncExternalStore(
     subscribeToConnection,
@@ -66,7 +70,15 @@ export function useAiBuddy(active: boolean) {
       append("buddy", text);
     };
 
+    // The assistant changes things on the server without going through this
+    // app, so the cache only learns about it because the service says so.
+    const onActions = (tools: string[]) => {
+      const tags = tagsForActions(tools ?? []);
+      if (tags.length) dispatch(baseApi.util.invalidateTags(tags));
+    };
+
     socket.on("message", onMessage);
+    socket.on("assistant-actions", onActions);
     socket.on("assistant-error", onAssistantError);
     socket.on("connect_error", onError);
 
@@ -74,10 +86,11 @@ export function useAiBuddy(active: boolean) {
 
     return () => {
       socket.off("message", onMessage);
+      socket.off("assistant-actions", onActions);
       socket.off("assistant-error", onAssistantError);
       socket.off("connect_error", onError);
     };
-  }, [active, append]);
+  }, [active, append, dispatch]);
 
   const send = useCallback(
     (text: string) => {

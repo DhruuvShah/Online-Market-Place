@@ -181,6 +181,10 @@ services:
         sync: false
       - key: EMAIL_APP_PASSWORD
         sync: false
+      # 465 is implicit TLS. Switch to 587 if the host blocks or drops 465;
+      # the transport picks STARTTLS automatically for that port.
+      - key: EMAIL_PORT
+        value: "465"
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
