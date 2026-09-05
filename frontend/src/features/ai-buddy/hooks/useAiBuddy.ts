@@ -59,13 +59,22 @@ export function useAiBuddy(active: boolean) {
       setFailed(true);
     };
 
+    // The server answers a failed turn with this rather than dying, so the
+    // drawer says what went wrong instead of thinking forever.
+    const onAssistantError = (text: string) => {
+      setIsThinking(false);
+      append("buddy", text);
+    };
+
     socket.on("message", onMessage);
+    socket.on("assistant-error", onAssistantError);
     socket.on("connect_error", onError);
 
     if (!socket.connected) socket.connect();
 
     return () => {
       socket.off("message", onMessage);
+      socket.off("assistant-error", onAssistantError);
       socket.off("connect_error", onError);
     };
   }, [active, append]);

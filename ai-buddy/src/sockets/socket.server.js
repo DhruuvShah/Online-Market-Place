@@ -34,28 +34,42 @@ async function initSocketServer(httpServer) {
   });
 
   io.on("connection", (socket) => {
-
     socket.on("message", async (data) => {
-      const agentResponse = await agent.invoke(
-        {
-          messages: [
-            {
-              role: "user",
-              content: data,
-            },
-          ],
-        },
-        {
-          metadata: {
-            token: socket.token,
+      // Node treats an unhandled rejection as fatal, so without this catch any
+      // failure inside the agent — a bad key, a retired model, an exhausted
+      // quota, an upstream service being asleep — took the whole process down
+      // rather than disappointing one conversation.
+      try {
+        const agentResponse = await agent.invoke(
+          {
+            messages: [
+              {
+                role: "user",
+                content: data,
+              },
+            ],
           },
-        },
-      );
+          {
+            metadata: {
+              token: socket.token,
+            },
+          },
+        );
 
-      const lastMessage =
-        agentResponse.messages[agentResponse.messages.length - 1];
+        const lastMessage =
+          agentResponse.messages[agentResponse.messages.length - 1];
 
-      socket.emit("message", lastMessage.content);
+        socket.emit("message", lastMessage.content);
+      } catch (error) {
+        console.error("Assistant could not answer:", error.message);
+
+        socket.emit(
+          "assistant-error",
+          error.code === "AGENT_NOT_CONFIGURED"
+            ? "The assistant is not configured on this deployment yet."
+            : "The assistant could not answer that. Please try again.",
+        );
+      }
     });
   });
 }

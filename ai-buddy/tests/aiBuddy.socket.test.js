@@ -40,6 +40,14 @@ function connect(cookie) {
   });
 }
 
+function authCookie() {
+  const token = jwt.sign(
+    { id: "u1", role: "user", username: "dhruv" },
+    process.env.JWT_SECRET,
+  );
+  return `token=${token}`;
+}
+
 function settle(socket) {
   return new Promise((resolve) => {
     socket.on("connect", () => resolve({ connected: true }));
@@ -128,5 +136,59 @@ describe("ai-buddy socket handshake", () => {
       content: "hello",
     });
     expect(config.metadata.token).toBe(token);
+  });
+});
+
+describe("when the agent fails", () => {
+  it("tells the client instead of taking the process down", async () => {
+    agent.invoke.mockRejectedValueOnce(new Error("quota exhausted"));
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const message = await new Promise((resolve) => {
+      client.on("assistant-error", resolve);
+      client.emit("message", "find me a chair");
+    });
+
+    expect(message).toMatch(/could not answer/i);
+    client.close();
+  });
+
+  it("says so plainly when no API key is configured", async () => {
+    const error = new Error("GOOGLE_API_KEY is not set");
+    error.code = "AGENT_NOT_CONFIGURED";
+    agent.invoke.mockRejectedValueOnce(error);
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    const message = await new Promise((resolve) => {
+      client.on("assistant-error", resolve);
+      client.emit("message", "hello");
+    });
+
+    expect(message).toMatch(/not configured/i);
+    client.close();
+  });
+
+  it("keeps serving the next message after a failure", async () => {
+    agent.invoke.mockRejectedValueOnce(new Error("transient"));
+
+    const client = connect(authCookie());
+    await settle(client);
+
+    await new Promise((resolve) => {
+      client.on("assistant-error", resolve);
+      client.emit("message", "first");
+    });
+
+    const reply = await new Promise((resolve) => {
+      client.on("message", resolve);
+      client.emit("message", "second");
+    });
+
+    expect(reply).toBe("Here are some red sneakers under 2000.");
+    client.close();
   });
 });
