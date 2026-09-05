@@ -27,7 +27,12 @@ export function Logo({ className = "", withWordmark = true }: Props) {
         />
       </svg>
       {withWordmark && (
-        <span className="text-title text-[17px] font-semibold">HiveMind</span>
+        // leading-none so the wordmark's box is its em-box. Beside nav links of
+        // a different size, centring two tight boxes is what makes them read as
+        // sitting on one line; two different line-heights never quite do.
+        <span className="text-title text-[17px] leading-none font-semibold">
+          HiveMind
+        </span>
       )}
     </span>
   );

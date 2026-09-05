@@ -57,8 +57,12 @@ export function ShopLayout() {
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <header className="sticky top-0 z-50 border-b border-line bg-[color-mix(in_srgb,var(--color-canvas)_80%,transparent)] backdrop-blur-xl">
         <nav className="shell flex h-16 items-center justify-between gap-4">
-          <div className="flex items-center gap-8">
-            <Link to="/discover" aria-label="HiveMind" className="shrink-0">
+          <div className="flex items-center gap-6 sm:gap-8">
+            <Link
+              to="/discover"
+              aria-label="HiveMind"
+              className="flex shrink-0 items-center"
+            >
               <Logo className="[&_span:last-child]:hidden sm:[&_span:last-child]:inline" />
             </Link>
 
@@ -68,10 +72,8 @@ export function ShopLayout() {
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
-                    `text-[14px] transition-colors ${
-                      isActive
-                        ? "text-ink"
-                        : "text-ink-muted hover:text-ink"
+                    `text-[14px] leading-none transition-colors ${
+                      isActive ? "text-ink" : "text-ink-muted hover:text-ink"
                     }`
                   }
                 >
