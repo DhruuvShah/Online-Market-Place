@@ -98,7 +98,14 @@ module.exports = async function () {
 
   subscribeToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", async (doc) => {
     await replicate(orderModel)(doc);
-    await notifySellers(doc);
+
+    // The projection is the job; the email is a courtesy. Letting a failed
+    // notification throw would nack an order that replicated perfectly well.
+    try {
+      await notifySellers(doc);
+    } catch (error) {
+      console.error("Failed to notify sellers of an order:", error.message);
+    }
   });
 
   subscribeToQueue(

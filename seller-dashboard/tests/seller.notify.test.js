@@ -214,6 +214,27 @@ describe("seller order notifications", () => {
     expect(sellerEmails()).toHaveLength(0);
   });
 
+  it("keeps the order projected when the notification publish blows up", async () => {
+    const buyer = await makeBuyer();
+    const seller = await makeSeller();
+    const orderModel = require("../src/models/order.model");
+
+    mockPublish.mockRejectedValueOnce(new Error("broker down"));
+
+    const order = orderFor(buyer, [
+      {
+        product: new mongoose.Types.ObjectId().toHexString(),
+        seller: seller._id.toHexString(),
+        title: "Chair",
+        quantity: 1,
+        price: { amount: 100, currency: "INR" },
+      },
+    ]);
+
+    await expect(emitOrder(order)).resolves.not.toThrow();
+    expect(await orderModel.findById(order._id)).not.toBeNull();
+  });
+
   it("still replicates the order even if the seller cannot be emailed", async () => {
     const buyer = await makeBuyer();
     const orderModel = require("../src/models/order.model");
