@@ -35,25 +35,25 @@ const headerOrder = () =>
   );
 
 describe("ShopLayout header", () => {
-  it("puts the controls first, then the links, then the mark", () => {
+  it("puts the mark first, then the links, then the controls", () => {
     renderLayout();
 
     const order = headerOrder();
     const index = (name: string) =>
       order.findIndex((label) => label.startsWith(name));
 
-    expect(index("Cart")).toBeGreaterThan(-1);
+    expect(index("HiveMind")).toBe(0);
+    expect(index("Discover")).toBeGreaterThan(index("HiveMind"));
+    expect(index("Orders")).toBeGreaterThan(index("Discover"));
+    expect(index("Cart")).toBeGreaterThan(index("Orders"));
     expect(index("Account")).toBeGreaterThan(index("Cart"));
     expect(index("Sign out")).toBeGreaterThan(index("Account"));
-    expect(index("Discover")).toBeGreaterThan(index("Sign out"));
-    expect(index("Orders")).toBeGreaterThan(index("Discover"));
-    expect(index("HiveMind")).toBeGreaterThan(index("Orders"));
   });
 
-  it("ends the bar with the mark, so it anchors the right edge", () => {
+  it("ends the bar with sign out, so the controls hold the right edge", () => {
     renderLayout();
 
-    expect(headerOrder().at(-1)).toBe("HiveMind");
+    expect(headerOrder().at(-1)).toBe("Sign out");
   });
 
   it("keeps every control reachable by its accessible name", () => {
