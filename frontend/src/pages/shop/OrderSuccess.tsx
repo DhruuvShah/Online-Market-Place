@@ -19,7 +19,9 @@ export default function OrderSuccess() {
     pollingInterval: polls < MAX_POLLS ? 2000 : 0,
   });
 
-  const confirmed = order?.status === "CONFIRMED";
+  // Anything past PENDING means the payment cleared. Checking for CONFIRMED
+  // alone would read as unconfirmed the moment fulfilment moves it onwards.
+  const confirmed = !!order && order.status !== "PENDING" && order.status !== "CANCELLED";
 
   useEffect(() => {
     if (confirmed || polls >= MAX_POLLS) return;
@@ -99,7 +101,7 @@ export default function OrderSuccess() {
       >
         {stillWaiting
           ? "Payment confirmation arrives by webhook and can take a few seconds. You can safely leave this page."
-          : "A confirmation email is on its way. You can track this order any time."}
+          : "A confirmation email is on its way. Follow your order through packing, dispatch and delivery from the tracking page."}
       </motion.p>
 
       <motion.div {...rise(1.2)} className="mt-9 flex flex-wrap justify-center gap-3">

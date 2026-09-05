@@ -3,6 +3,8 @@ const { sendEmail } = require("../email");
 const {
   welcomeEmail,
   orderPlacedEmail,
+  orderShippedEmail,
+  orderDeliveredEmail,
   orderCancelledEmail,
   sellerOrderEmail,
   paymentInitiatedEmail,
@@ -14,6 +16,8 @@ const {
 const routes = [
   ["AUTH_NOTIFICATION.USER_CREATED", welcomeEmail],
   ["ORDER_NOTIFICATION.ORDER_PLACED", orderPlacedEmail],
+  ["ORDER_NOTIFICATION.ORDER_SHIPPED", orderShippedEmail],
+  ["ORDER_NOTIFICATION.ORDER_DELIVERED", orderDeliveredEmail],
   ["ORDER_NOTIFICATION.ORDER_CANCELLED", orderCancelledEmail],
   ["ORDER_NOTIFICATION.SELLER_ORDER_RECEIVED", sellerOrderEmail],
   ["PAYMENT_NOTIFICATION.PAYMENT_INITIATED", paymentInitiatedEmail],

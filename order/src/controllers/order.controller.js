@@ -2,40 +2,29 @@ const orderModel = require("../models/order.model");
 const axios = require("axios");
 const { publishToOutbox } = require("../broker/outbox");
 const { changeStock } = require("../services/product.service");
+const { notificationPayload } = require("../services/notification.payload");
+const fulfilment = require("../services/fulfilment");
 
 const CART_SERVICE_URL =
   process.env.CART_SERVICE_URL || "http://localhost:3002";
 const PRODUCT_SERVICE_URL =
   process.env.PRODUCT_SERVICE_URL || "http://localhost:3001";
 
-// The notification service renders the whole receipt from this payload, so it
-// carries everything an email needs and never calls back into another service.
-function notificationPayload(order, user) {
-  return {
-    email: user.email,
-    username: user.username,
-    orderId: String(order._id),
-    status: order.status,
-    placedAt: order.createdAt,
-    currency: order.totalPrice.currency,
-    total: order.totalPrice.amount,
-    items: order.items.map((item) => ({
-      title: item.title,
-      image: item.image,
-      quantity: item.quantity,
-      amount: item.price.amount,
-      currency: item.price.currency,
-    })),
-    shippingAddress: order.shippingAddress
-      ? {
-          street: order.shippingAddress.street,
-          city: order.shippingAddress.city,
-          state: order.shippingAddress.state,
-          zip: order.shippingAddress.zip,
-          country: order.shippingAddress.country,
-        }
-      : null,
-  };
+/**
+ * Brings the caller's orders up to date before reading them.
+ *
+ * The ticker handles this while the service is awake, but a free deployment
+ * sleeps: nobody sweeps for hours, and the buyer would refresh into a timeline
+ * frozen where it stood when the last request came in. Catching up on the read
+ * is scoped to what is about to be returned, so it stays cheap.
+ */
+async function catchUp(filter) {
+  try {
+    await fulfilment.advanceDueOrders(filter);
+  } catch (err) {
+    // A stale timeline is a better outcome than a failed page load.
+    console.error("Could not advance fulfilment before read:", err.message);
+  }
 }
 
 async function createOrder(req, res) {
@@ -98,8 +87,11 @@ async function createOrder(req, res) {
 
     const order = await orderModel.create({
       user: user.id,
+      userEmail: user.email,
+      username: user.username,
       items: orderItems,
       status: "PENDING",
+      timeline: [fulfilment.trackingEvent("PENDING")],
       totalPrice: {
         amount: priceAmount,
         currency: "INR",
@@ -152,6 +144,8 @@ async function getMyOrders(req, res) {
   const skip = (page - 1) * limit;
 
   try {
+    await catchUp({ user: user.id });
+
     const orders = await orderModel
       .find({ user: user.id })
       .sort({ createdAt: -1 })
@@ -180,6 +174,8 @@ async function getOrderById(req, res) {
   const orderId = req.params.id;
 
   try {
+    await catchUp({ _id: orderId });
+
     const order = await orderModel.findById(orderId);
 
     if (!order) {
@@ -217,14 +213,18 @@ async function cancelOrderById(req, res) {
         .json({ message: "Forbidden: You do not have access to this order" });
     }
 
-    // only PENDING orders can be cancelled
-    if (order.status !== "PENDING") {
+    // Cancellable right up until the courier has it — once an order ships
+    // there is nothing left to call off.
+    if (!fulfilment.CANCELLABLE.includes(order.status)) {
       return res
         .status(409)
         .json({ message: "Order cannot be cancelled at this stage" });
     }
 
     order.status = "CANCELLED";
+    order.timeline.push(fulfilment.trackingEvent("CANCELLED"));
+    // Stops the fulfilment ticker from marching a cancelled order onwards.
+    order.nextTransitionAt = null;
     await order.save();
 
     try {
@@ -266,8 +266,9 @@ async function updateOrderAddress(req, res) {
         .json({ message: "Forbidden: You do not have access to this order" });
     }
 
-    // only PENDING orders can have address updated
-    if (order.status !== "PENDING") {
+    // Correctable until it is handed to the courier, for the same reason a
+    // cancel is: after that the parcel is already going somewhere.
+    if (!fulfilment.CANCELLABLE.includes(order.status)) {
       return res
         .status(409)
         .json({ message: "Order address cannot be updated at this stage" });

@@ -1,7 +1,16 @@
 const productModel = require("../models/product.model");
 const orderModel = require("../models/order.model");
 
-const EARNING_STATUSES = ["CONFIRMED", "SHIPPED", "DELIVERED"];
+// Every status a paid order can hold. Money is earned the moment payment
+// clears, so the whole fulfilment run counts — only PENDING (not yet paid) and
+// CANCELLED (refunded) sit outside.
+const EARNING_STATUSES = [
+  "CONFIRMED",
+  "PACKED",
+  "SHIPPED",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+];
 const SERIES_DAYS = 30;
 const LOW_STOCK = 5;
 const TOP_PRODUCTS = 5;
@@ -50,6 +59,16 @@ async function getMetrics(req, res) {
     let revenue = 0;
     const perProduct = new Map();
 
+    // Splits earned money by whether the parcel has actually landed. Both
+    // halves are already counted in `revenue`; this says how much of it is
+    // still moving.
+    const fulfilment = {
+      inTransit: 0,
+      delivered: 0,
+      inTransitRevenue: 0,
+      deliveredRevenue: 0,
+    };
+
     for (const order of orders) {
       const bucket = buckets.get(dayKey(order.createdAt));
       let orderRevenue = 0;
@@ -70,6 +89,13 @@ async function getMetrics(req, res) {
         running.sold += item.quantity;
         running.revenue += lineTotal;
         perProduct.set(key, running);
+      }
+
+      if (orderUnits > 0) {
+        const landed = order.status === "DELIVERED";
+        fulfilment[landed ? "delivered" : "inTransit"] += 1;
+        fulfilment[landed ? "deliveredRevenue" : "inTransitRevenue"] +=
+          orderRevenue;
       }
 
       if (bucket && orderUnits > 0) {
@@ -127,6 +153,7 @@ async function getMetrics(req, res) {
         ? Math.round(revenue / orders.length)
         : 0,
       topProducts,
+      fulfilment,
       revenueSeries: series,
       stockLevels,
       stockSummary,

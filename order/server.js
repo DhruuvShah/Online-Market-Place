@@ -11,6 +11,7 @@ const connectDB = require("./src/db/db");
 const { connect } = require("./src/broker/broker");
 const { startOutboxDrain } = require("./src/broker/outbox");
 const listener = require("./src/broker/listener");
+const { startFulfilmentTicker } = require("./src/services/fulfilment");
 const attachShutdown = require("./src/shutdown");
 
 connectDB();
@@ -18,6 +19,7 @@ connect().then(() => {
   listener();
 });
 startOutboxDrain();
+startFulfilmentTicker();
 
 const server = app.listen(process.env.PORT || 3003, () => {
   console.log(`Order service is running on port ${process.env.PORT || 3003}`);

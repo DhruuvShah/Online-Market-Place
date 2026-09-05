@@ -30,6 +30,13 @@ export type SellerMetrics = {
   productCount: number;
   recentOrderCount: number;
   topProducts: TopProduct[];
+  /** Earned revenue split by whether the parcel has landed yet. */
+  fulfilment?: {
+    inTransit: number;
+    delivered: number;
+    inTransitRevenue: number;
+    deliveredRevenue: number;
+  };
   revenueSeries: RevenuePoint[];
   stockLevels: StockLevel[];
   stockSummary: {

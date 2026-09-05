@@ -61,9 +61,20 @@ export type Cart = {
 export type OrderStatus =
   | "PENDING"
   | "CONFIRMED"
-  | "CANCELLED"
+  | "PACKED"
   | "SHIPPED"
-  | "DELIVERED";
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED";
+
+// One entry per stage the order has actually reached, written by the order
+// service as it happens rather than inferred from the current status.
+export type TrackingEvent = {
+  status: OrderStatus;
+  at: string;
+  label: string;
+  detail?: string;
+};
 
 // title, image and seller are snapshotted by the order service at checkout, so
 // an order keeps showing what was bought even if the listing later changes.
@@ -82,6 +93,9 @@ export type Order = {
   user: string;
   items: OrderItem[];
   status: OrderStatus;
+  timeline?: TrackingEvent[];
+  /** When the order moves to its next stage. Absent once it stops moving. */
+  nextTransitionAt?: string | null;
   totalPrice: Money;
   shippingAddress: Omit<Address, "_id" | "isDefault">;
   createdAt: string;

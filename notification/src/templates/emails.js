@@ -277,6 +277,108 @@ function orderCancelledEmail(data) {
   };
 }
 
+function orderShippedEmail(data) {
+  const items = data.items ?? [];
+  const currency = data.currency || "INR";
+  const total = formatMoney(data.total, currency);
+  const reference = shortId(data.orderId);
+
+  const body = [
+    paragraph(
+      `Good news, ${escapeHtml(data.username || "there")} — order ${escapeHtml(reference)} has left the seller and is on its way to you.`,
+    ),
+    itemsTable(items, currency),
+    totalRow("Order total", total),
+    addressBlock(data.shippingAddress, "Delivering to"),
+    summaryTable([
+      { label: "Order reference", value: reference, mono: true },
+      { label: "Items", value: itemCount(items) },
+      { label: "Status", value: "Shipped" },
+    ]),
+    noteBlock(
+      "You can follow the remaining stages from your orders page. We will email you once it has been delivered.",
+    ),
+  ].join("");
+
+  return {
+    subject: `Order ${reference} is on its way`,
+    text: [
+      `Order ${reference} has shipped and is on its way to you.`,
+      "",
+      plainItems(items, currency),
+      "",
+      `Total: ${total}`,
+      "",
+      "Delivering to:",
+      plainAddress(data.shippingAddress),
+      "",
+      `Track it: ${APP_URL}/orders/${data.orderId}`,
+    ].join("\n"),
+    html: renderLayout({
+      preheader: `${itemCount(items)} on the way — ${total}.`,
+      eyebrow: "Shipped",
+      heading: "Your order is on its way",
+      body,
+      cta: {
+        label: "Track your order",
+        url: `${APP_URL}/orders/${data.orderId}`,
+      },
+      footerNote: `Order ${reference}. Keep this email for your records.`,
+    }),
+  };
+}
+
+function orderDeliveredEmail(data) {
+  const items = data.items ?? [];
+  const currency = data.currency || "INR";
+  const total = formatMoney(data.total, currency);
+  const reference = shortId(data.orderId);
+
+  const body = [
+    paragraph(
+      `Delivered. Order ${escapeHtml(reference)} has been handed over at your shipping address — we hope it was worth the wait.`,
+    ),
+    itemsTable(items, currency),
+    totalRow("Order total", total),
+    addressBlock(data.shippingAddress, "Delivered to"),
+    summaryTable([
+      { label: "Order reference", value: reference, mono: true },
+      { label: "Items", value: itemCount(items) },
+      { label: "Status", value: "Delivered" },
+    ]),
+    noteBlock(
+      "Something not right? Reply to this email with your order reference and we will pick it up from there.",
+    ),
+  ].join("");
+
+  return {
+    subject: `Order ${reference} delivered`,
+    text: [
+      `Order ${reference} has been delivered.`,
+      "",
+      plainItems(items, currency),
+      "",
+      `Total: ${total}`,
+      "",
+      "Delivered to:",
+      plainAddress(data.shippingAddress),
+      "",
+      `View the order: ${APP_URL}/orders/${data.orderId}`,
+    ].join("\n"),
+    html: renderLayout({
+      preheader: `${itemCount(items)} delivered — ${total}.`,
+      eyebrow: "Delivered",
+      heading: "Your order has arrived",
+      body,
+      cta: {
+        label: "View your order",
+        url: `${APP_URL}/orders/${data.orderId}`,
+      },
+      footerNote: `Order ${reference}. Thank you for shopping with HiveMind.`,
+    }),
+  };
+}
+
 function sellerOrderEmail(data) {
   const items = data.items ?? [];
   const currency = data.currency || "INR";
@@ -418,6 +520,8 @@ function productPublishedEmail(data) {
 module.exports = {
   welcomeEmail,
   orderPlacedEmail,
+  orderShippedEmail,
+  orderDeliveredEmail,
   orderCancelledEmail,
   sellerOrderEmail,
   paymentInitiatedEmail,

@@ -47,8 +47,27 @@ const orderSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["PENDING", "CONFIRMED", "CANCELLED", "SHIPPED", "DELIVERED"],
+      enum: [
+        "PENDING",
+        "CONFIRMED",
+        "PACKED",
+        "SHIPPED",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED",
+        "CANCELLED",
+      ],
     },
+    // Replicated from the order service so a seller sees the same fulfilment
+    // history the buyer does, without the dashboard having to ask for it.
+    timeline: [
+      {
+        _id: false,
+        status: String,
+        at: Date,
+        label: String,
+        detail: String,
+      },
+    ],
     totalPrice: {
       amount: {
         type: Number,

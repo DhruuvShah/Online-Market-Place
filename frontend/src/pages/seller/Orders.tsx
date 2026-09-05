@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { Mail, MapPin, ReceiptText, Search, User } from "lucide-react";
+import { CircleCheck, Mail, MapPin, ReceiptText, Search, User } from "lucide-react";
 import { useSellerOrdersQuery } from "@/services/seller.api";
 import type { SellerOrder } from "@/services/seller.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { OrderItemList } from "@/features/orders/components/OrderItemList";
+import { OrderProgress } from "@/features/orders/components/OrderProgress";
+import { isInFlight } from "@/features/orders/tracking";
 import { orderStatusLabels } from "@/features/orders/orderStatus";
 import { Input } from "@/components/ui/Field";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -11,11 +13,15 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
 import type { OrderStatus } from "@/types";
 
+const POLL_MS = 8000;
+
 const filters: (OrderStatus | "ALL")[] = [
   "ALL",
   "PENDING",
   "CONFIRMED",
+  "PACKED",
   "SHIPPED",
+  "OUT_FOR_DELIVERY",
   "DELIVERED",
   "CANCELLED",
 ];
@@ -76,12 +82,22 @@ function OrderCard({ order }: { order: SellerOrder }) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* A sale is only finished when it lands, so say so plainly. */}
+          {order.status === "DELIVERED" && (
+            <CircleCheck
+              className="text-accent h-5 w-5"
+              strokeWidth={1.75}
+              aria-label="Delivered"
+            />
+          )}
           <OrderStatusBadge status={order.status} />
           <span className="tnum text-[17px]">
             {formatMoney(sellerTotal(order), order.totalPrice.currency)}
           </span>
         </div>
       </div>
+
+      <OrderProgress order={order} className="mt-5" />
 
       <div className="mt-5">
         <OrderItemList items={order.items} linkToProduct={false} />
@@ -126,9 +142,19 @@ function OrderCard({ order }: { order: SellerOrder }) {
 }
 
 export default function SellerOrders() {
-  const { data: orders, isLoading } = useSellerOrdersQuery();
   const [status, setStatus] = useState<OrderStatus | "ALL">("ALL");
   const [term, setTerm] = useState("");
+  const [polling, setPolling] = useState(true);
+
+  const { data: orders, isLoading } = useSellerOrdersQuery(undefined, {
+    pollingInterval: polling ? POLL_MS : 0,
+    skipPollingIfUnfocused: true,
+  });
+
+  // Orders move themselves through fulfilment, so the seller sees each stage
+  // land without reloading. Nothing in flight, nothing to poll for.
+  const shouldPoll = !orders || orders.some((o) => isInFlight(o.status));
+  if (polling !== shouldPoll) setPolling(shouldPoll);
 
   const visible = useMemo(() => {
     const list = orders ?? [];

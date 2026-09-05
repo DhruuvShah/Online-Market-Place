@@ -31,6 +31,19 @@ export function formatDate(value: string) {
   });
 }
 
+/**
+ * Date and time together. Fulfilment stages can land minutes apart, so a bare
+ * date would show four identical rows on a tracking timeline.
+ */
+export function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function stockLabel(stock: number | null) {
   if (stock === null) return { label: "Unavailable", tone: "muted" as const };
   if (stock <= 0) return { label: "Out of stock", tone: "danger" as const };

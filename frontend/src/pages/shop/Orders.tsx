@@ -4,6 +4,8 @@ import { Package } from "lucide-react";
 import { useMyOrdersQuery } from "@/services/order.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { OrderItemStack } from "@/features/orders/components/OrderItemList";
+import { OrderProgress } from "@/features/orders/components/OrderProgress";
+import { isInFlight } from "@/features/orders/tracking";
 import type { OrderItem } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -11,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
 
 const PAGE_SIZE = 10;
+const POLL_MS = 8000;
 
 /** "Aeron Chair and 2 more" reads better in a list than a bare order number. */
 function summarise(items: OrderItem[]) {
@@ -25,7 +28,19 @@ function summarise(items: OrderItem[]) {
 
 export default function Orders() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useMyOrdersQuery({ page, limit: PAGE_SIZE });
+  const [polling, setPolling] = useState(true);
+
+  const { data, isLoading } = useMyOrdersQuery(
+    { page, limit: PAGE_SIZE },
+    {
+      pollingInterval: polling ? POLL_MS : 0,
+      skipPollingIfUnfocused: true,
+    },
+  );
+
+  // Only worth refreshing while something on this page is still moving.
+  const shouldPoll = !data || data.orders.some((o) => isInFlight(o.status));
+  if (polling !== shouldPoll) setPolling(shouldPoll);
 
   if (isLoading) {
     return (
@@ -86,6 +101,7 @@ export default function Orders() {
                   </span>{" "}
                   · {formatDate(order.createdAt)}
                 </span>
+                <OrderProgress order={order} className="mt-1.5 max-w-56" />
               </div>
 
               <div className="flex items-center justify-between gap-5 sm:justify-end">

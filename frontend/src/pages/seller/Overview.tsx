@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Boxes, Plus, TrendingUp } from "lucide-react";
 import {
@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
 
 const LOW_STOCK = 5;
+const POLL_MS = 8000;
 const STOCK_BARS = 8;
 
 function Section({
@@ -47,9 +48,19 @@ function Section({
 
 export default function Overview() {
   const { user } = useAuth();
-  const { data: metrics, isLoading: metricsLoading } = useSellerMetricsQuery();
+  const [polling, setPolling] = useState(true);
+
+  const { data: metrics, isLoading: metricsLoading } = useSellerMetricsQuery(
+    undefined,
+    { pollingInterval: polling ? POLL_MS : 0, skipPollingIfUnfocused: true },
+  );
   const { data: products, isLoading: productsLoading } = useMyProductsQuery();
   const { data: orders } = useSellerOrdersQuery();
+
+  // Orders finish fulfilling on their own, so the figures move while the page
+  // is open. Once nothing is in transit there is nothing left to refresh for.
+  const shouldPoll = !metrics || (metrics.fulfilment?.inTransit ?? 0) > 0;
+  if (polling !== shouldPoll) setPolling(shouldPoll);
 
   const catalog = useMemo(() => products ?? [], [products]);
 
@@ -128,9 +139,23 @@ export default function Overview() {
     { inStock: 0, lowStock: 0, outOfStock: 0, units: 0 },
   );
 
+  const fulfilment = metrics?.fulfilment;
+
   const stats = [
-    { label: "Items sold", value: String(metrics?.sales ?? 0) },
-    { label: "Revenue", value: formatMoney(metrics?.revenue ?? 0) },
+    {
+      label: "Items sold",
+      value: String(metrics?.sales ?? 0),
+      hint: fulfilment
+        ? `${fulfilment.delivered} delivered · ${fulfilment.inTransit} in transit`
+        : undefined,
+    },
+    {
+      label: "Revenue",
+      value: formatMoney(metrics?.revenue ?? 0),
+      hint: fulfilment
+        ? `${formatMoney(fulfilment.deliveredRevenue)} already delivered`
+        : undefined,
+    },
     {
       label: "Average order",
       value: formatMoney(metrics?.averageOrderValue ?? 0),

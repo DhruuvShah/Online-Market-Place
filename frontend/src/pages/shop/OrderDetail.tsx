@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, PackageX } from "lucide-react";
 import { useCancelOrderMutation, useOrderQuery } from "@/services/order.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { OrderItemList } from "@/features/orders/components/OrderItemList";
+import { OrderTracker } from "@/features/orders/components/OrderTracker";
+import { isInFlight } from "@/features/orders/tracking";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,26 +15,32 @@ import { formatDate, formatMoney } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import type { OrderStatus } from "@/types";
 
-const timeline: OrderStatus[] = [
-  "PENDING",
-  "CONFIRMED",
-  "SHIPPED",
-  "DELIVERED",
-];
+const POLL_MS = 4000;
 
-const timelineLabels: Record<string, string> = {
-  PENDING: "Placed",
-  CONFIRMED: "Paid",
-  SHIPPED: "Shipped",
-  DELIVERED: "Delivered",
-};
+/** Matches the order service, which refuses a cancel once it has shipped. */
+const CANCELLABLE: OrderStatus[] = ["PENDING", "CONFIRMED", "PACKED"];
 
 export default function OrderDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { notify } = useToast();
-  const { data: order, isLoading, isError } = useOrderQuery(id);
+  const [polling, setPolling] = useState(true);
+
+  const {
+    data: order,
+    isLoading,
+    isError,
+  } = useOrderQuery(id, {
+    pollingInterval: polling ? POLL_MS : 0,
+    skipPollingIfUnfocused: true,
+  });
+
   const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation();
+
+  // An order in fulfilment moves on its own, so the page follows it. Once it
+  // stops moving there is nothing left to wait for, so the poll stops too.
+  const shouldPoll = !order || isInFlight(order.status);
+  if (polling !== shouldPoll) setPolling(shouldPoll);
 
   if (isLoading) {
     return (
@@ -58,8 +67,7 @@ export default function OrderDetail() {
   }
 
   const cancelled = order.status === "CANCELLED";
-  const canCancel = order.status === "PENDING" || order.status === "CONFIRMED";
-  const currentStep = timeline.indexOf(order.status);
+  const canCancel = CANCELLABLE.includes(order.status);
 
   const cancel = async () => {
     try {
@@ -92,33 +100,14 @@ export default function OrderDetail() {
         <OrderStatusBadge status={order.status} />
       </div>
 
-      {!cancelled && (
-        <ol className="mt-10 grid grid-cols-4 gap-2">
-          {timeline.map((stage, index) => {
-            const reached = index <= currentStep;
-            return (
-              <li key={stage} className="flex flex-col gap-2.5">
-                <span
-                  className={`h-1 rounded-full ${
-                    reached ? "bg-accent" : "bg-line"
-                  }`}
-                />
-                <span
-                  className={`text-[12px] ${
-                    reached ? "text-ink" : "text-ink-subtle"
-                  }`}
-                >
-                  {timelineLabels[stage]}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
       <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-16">
         <div>
-          <h2 className="text-title text-lg font-medium">
+          <h2 className="text-title text-lg font-medium">Tracking</h2>
+          <div className="mt-6">
+            <OrderTracker order={order} />
+          </div>
+
+          <h2 className="text-title mt-12 text-lg font-medium">
             Items{" "}
             <span className="text-ink-subtle tnum text-[15px] font-normal">
               ({order.items.length})

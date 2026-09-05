@@ -102,6 +102,11 @@ services:
         sync: false
       - key: PRODUCT_SERVICE_URL
         sync: false
+      # Seconds between simulated fulfilment stages. The whole route is six
+      # steps, so 45 delivers an order about four and a half minutes after it
+      # is paid for. Set FULFILMENT_SIMULATION=off to freeze orders instead.
+      - key: FULFILMENT_STEP_SECONDS
+        value: "45"
 
   - type: web
     name: hivemind-payment

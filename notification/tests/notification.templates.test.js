@@ -1,6 +1,8 @@
 const {
   welcomeEmail,
   orderPlacedEmail,
+  orderShippedEmail,
+  orderDeliveredEmail,
   orderCancelledEmail,
   sellerOrderEmail,
   paymentInitiatedEmail,
@@ -115,6 +117,8 @@ const builders = [
       }),
   ],
   ["order placed", () => orderPlacedEmail(sampleOrder())],
+  ["order shipped", () => orderShippedEmail(sampleOrder())],
+  ["order delivered", () => orderDeliveredEmail(sampleOrder())],
   ["order cancelled", () => orderCancelledEmail(sampleOrder())],
   ["seller order", () => sellerOrderEmail(sampleSellerOrder())],
 ];
@@ -209,6 +213,35 @@ describe("email templates", () => {
     expect(cancelled.html).toContain("Order cancelled");
     expect(cancelled.html).toContain("back into the catalog");
     expect(cancelled.html).toContain("refund");
+  });
+
+  it("gives each fulfilment stage its own subject and heading", () => {
+    const shipped = orderShippedEmail(sampleOrder());
+    const delivered = orderDeliveredEmail(sampleOrder());
+
+    expect(shipped.subject).not.toBe(delivered.subject);
+    expect(shipped.subject).toMatch(/on its way/i);
+    expect(delivered.subject).toMatch(/delivered/i);
+    expect(shipped.html).toContain("Shipped");
+    expect(delivered.html).toContain("Delivered");
+  });
+
+  it("carries the items and the address through the fulfilment emails", () => {
+    for (const build of [orderShippedEmail, orderDeliveredEmail]) {
+      const { html, text } = build(sampleOrder());
+
+      expect(html).toContain("Aeron Chair");
+      expect(html).toContain("https://ik.example/chair.jpg");
+      expect(html).toContain("12 Linking Road");
+      expect(text).toContain("Aeron Chair");
+    }
+  });
+
+  it("links a shipped order back to its tracking page", () => {
+    const { html, text } = orderShippedEmail(sampleOrder());
+
+    expect(html).toContain("/orders/652f1a2b3c4d5e6f70819203");
+    expect(text).toContain("/orders/652f1a2b3c4d5e6f70819203");
   });
 
   it("renders an order with no saved address without breaking", () => {
