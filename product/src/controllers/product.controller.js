@@ -55,6 +55,12 @@ async function createProduct(req, res) {
       username: req.user.username,
       productId: product._id,
       sellerId: seller,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      image: product.images?.[0]?.thumbnail || product.images?.[0]?.url,
+      imageCount: product.images.length,
     });
 
     return res.status(201).json({
@@ -67,8 +73,45 @@ async function createProduct(req, res) {
   }
 }
 
+const MAX_LIMIT = 48;
+
+const SORTS = {
+  newest: { _id: -1 },
+  oldest: { _id: 1 },
+  price_asc: { "price.amount": 1, _id: -1 },
+  price_desc: { "price.amount": -1, _id: -1 },
+  title: { title: 1, _id: -1 },
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// $text only matches whole indexed words, so "chai" finds nothing when the
+// product is a "Chair". Every whitespace-separated token has to appear
+// somewhere in the title or description, which gives partial matching and
+// narrows as the shopper keeps typing.
+function searchClauses(term) {
+  return term
+    .trim()
+    .split(/\s+/)
+    .slice(0, 8)
+    .filter(Boolean)
+    .map((token) => {
+      const pattern = new RegExp(escapeRegex(token), "i");
+      return { $or: [{ title: pattern }, { description: pattern }] };
+    });
+}
+
 async function getProducts(req, res) {
-  const { q, minprice, maxprice, ids, skip = 0, limit = 20 } = req.query;
+  const {
+    q,
+    minprice,
+    maxprice,
+    ids,
+    instock,
+    sort,
+    skip = 0,
+    limit = 20,
+  } = req.query;
 
   const filter = {};
 
@@ -78,13 +121,18 @@ async function getProducts(req, res) {
 
   if (requestedIds) {
     if (!requestedIds.length) {
-      return res.status(200).json({ data: [] });
+      return res
+        .status(200)
+        .json({ data: [], meta: { total: 0, skip: 0, limit: 0, hasMore: false } });
     }
     filter._id = { $in: requestedIds };
   }
 
-  if (q) {
-    filter.$text = { $search: q };
+  const term = typeof q === "string" ? q.trim() : "";
+  const clauses = term ? searchClauses(term) : [];
+
+  if (clauses.length) {
+    filter.$and = clauses;
   }
 
   if (minprice) {
@@ -101,12 +149,57 @@ async function getProducts(req, res) {
     };
   }
 
-  const products = await productModel
-    .find(filter)
-    .skip(Number(skip))
-    .limit(requestedIds ? requestedIds.length : Math.min(Number(limit), 20));
+  if (instock === "true") {
+    filter.stock = { $gt: 0 };
+  }
 
-  return res.status(200).json({ data: products });
+  const pageSize = requestedIds
+    ? requestedIds.length
+    : Math.min(Math.max(Number(limit) || 20, 1), MAX_LIMIT);
+  const offset = Math.max(Number(skip) || 0, 0);
+
+  const meta = (total) => ({
+    total,
+    skip: offset,
+    limit: pageSize,
+    hasMore: offset + pageSize < total,
+  });
+
+  // With a search term and no explicit sort, rank title hits above products
+  // that only matched on their description.
+  if (term && !SORTS[sort]) {
+    const titlePattern = new RegExp(escapeRegex(term), "i");
+
+    const [products, total] = await Promise.all([
+      productModel.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            titleHit: { $regexMatch: { input: "$title", regex: titlePattern } },
+          },
+        },
+        { $sort: { titleHit: -1, _id: -1 } },
+        { $skip: offset },
+        { $limit: pageSize },
+        { $unset: "titleHit" },
+      ]),
+      productModel.countDocuments(filter),
+    ]);
+
+    return res.status(200).json({ data: products, meta: meta(total) });
+  }
+
+  const [products, total] = await Promise.all([
+    productModel
+      .find(filter)
+      .sort(SORTS[sort] ?? SORTS.newest)
+      .skip(offset)
+      .limit(pageSize)
+      .exec(),
+    productModel.countDocuments(filter),
+  ]);
+
+  return res.status(200).json({ data: products, meta: meta(total) });
 }
 
 async function getProductById(req, res) {

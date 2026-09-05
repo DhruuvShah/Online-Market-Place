@@ -46,3 +46,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = "Input";
+
+type SelectProps = ComponentPropsWithoutRef<"select">;
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className = "", children, ...props }, ref) => (
+    <select
+      ref={ref}
+      className={`border-line-strong bg-raised text-ink focus-visible:border-ink h-11 w-full cursor-pointer rounded-sm border pr-8 pl-3.5 text-[15px] transition-colors focus:outline-none ${className}`}
+      {...props}
+    >
+      {children}
+    </select>
+  ),
+);
+
+Select.displayName = "Select";

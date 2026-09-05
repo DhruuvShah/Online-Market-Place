@@ -2,6 +2,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, PackageX } from "lucide-react";
 import { useCancelOrderMutation, useOrderQuery } from "@/services/order.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { OrderItemList } from "@/features/orders/components/OrderItemList";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -117,31 +118,15 @@ export default function OrderDetail() {
 
       <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-16">
         <div>
-          <h2 className="text-title text-lg font-medium">Items</h2>
-          <ul className="mt-4 divide-y divide-line border-y border-line">
-            {order.items.map((item, index) => (
-              <li
-                key={`${item.product}-${index}`}
-                className="flex items-center justify-between gap-4 py-4"
-              >
-                <Link
-                  to={`/products/${item.product}`}
-                  className="text-[14px] hover:text-accent"
-                >
-                  View product
-                  <span className="tnum ml-2 text-ink-muted">
-                    ×{item.quantity}
-                  </span>
-                </Link>
-                <span className="tnum text-[14px]">
-                  {formatMoney(
-                    item.price.amount * item.quantity,
-                    item.price.currency,
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-title text-lg font-medium">
+            Items{" "}
+            <span className="text-ink-subtle tnum text-[15px] font-normal">
+              ({order.items.length})
+            </span>
+          </h2>
+          <div className="mt-4">
+            <OrderItemList items={order.items} />
+          </div>
 
           {order.shippingAddress && (
             <>

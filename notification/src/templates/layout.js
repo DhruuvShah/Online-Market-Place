@@ -59,6 +59,73 @@ function summaryTable(rows) {
     </table>`;
 }
 
+// A 64px thumbnail beside every line. Mail clients that block images fall back
+// to the bordered placeholder cell rather than collapsing the row.
+function itemsTable(items = [], currency = "INR") {
+  const rows = items
+    .map((item) => {
+      const quantity = Number(item.quantity) || 1;
+      const lineTotal = formatMoney(Number(item.amount) * quantity, currency);
+      const thumb = item.image
+        ? `<img src="${escapeHtml(item.image)}" width="64" height="64" alt="" style="display:block;width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid ${BRAND.line};">`
+        : `<span style="display:block;width:64px;height:64px;border-radius:8px;border:1px solid ${BRAND.line};background:${BRAND.canvas};"></span>`;
+
+      return `
+        <tr>
+          <td width="64" valign="top" style="padding:14px 14px 14px 0;">${thumb}</td>
+          <td valign="top" style="padding:14px 0;">
+            <p style="margin:0 0 4px;font-family:${BODY_FONT};font-size:15px;line-height:1.4;color:${BRAND.ink};font-weight:600;">${escapeHtml(item.title || "Product")}</p>
+            <p style="margin:0;font-family:${MONO_FONT};font-size:13px;color:${BRAND.subtle};">Qty ${quantity} &middot; ${formatMoney(item.amount, currency)} each</p>
+          </td>
+          <td align="right" valign="top" style="padding:14px 0 14px 14px;font-family:${MONO_FONT};font-size:14px;color:${BRAND.ink};white-space:nowrap;">${lineTotal}</td>
+        </tr>`;
+    })
+    .join(
+      `<tr><td colspan="3" style="padding:0;"><div style="height:1px;background:${BRAND.line};"></div></td></tr>`,
+    );
+
+  if (!rows) return "";
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border:1px solid ${BRAND.line};border-radius:12px;background:${BRAND.raised};">
+      <tr><td style="padding:6px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+      </td></tr>
+    </table>`;
+}
+
+function addressBlock(address, label = "Delivering to") {
+  if (!address) return "";
+
+  const lines = [
+    address.street,
+    [address.city, address.state].filter(Boolean).join(", "),
+    address.zip,
+    address.country,
+  ]
+    .filter(Boolean)
+    .map(escapeHtml)
+    .join("<br>");
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr><td style="padding:18px 20px;border:1px solid ${BRAND.line};border-radius:12px;">
+        <p style="margin:0 0 8px;font-family:${MONO_FONT};font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:${BRAND.subtle};">${escapeHtml(label)}</p>
+        <p style="margin:0;font-family:${BODY_FONT};font-size:14px;line-height:1.6;color:${BRAND.ink};">${lines}</p>
+      </td></tr>
+    </table>`;
+}
+
+function totalRow(label, value) {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      <tr>
+        <td style="padding:14px 0 0;border-top:2px solid ${BRAND.ink};font-family:${BODY_FONT};font-size:15px;font-weight:600;color:${BRAND.ink};">${escapeHtml(label)}</td>
+        <td align="right" style="padding:14px 0 0;border-top:2px solid ${BRAND.ink};font-family:${MONO_FONT};font-size:18px;font-weight:600;color:${BRAND.ink};">${escapeHtml(value)}</td>
+      </tr>
+    </table>`;
+}
+
 function noteBlock(text) {
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-left:3px solid ${BRAND.accent};">
@@ -128,11 +195,14 @@ function renderLayout({ preheader, eyebrow, heading, body, cta, footerNote }) {
 module.exports = {
   APP_URL,
   BRAND,
+  addressBlock,
   button,
   escapeHtml,
   formatMoney,
+  itemsTable,
   noteBlock,
   paragraph,
   renderLayout,
   summaryTable,
+  totalRow,
 };

@@ -3,7 +3,14 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Check, Lock } from "lucide-react";
+import { ArrowLeft, Check, ImageOff, Lock } from "lucide-react";
+import { useAddAddressMutation } from "@/services/auth.api";
+import { AddressPicker } from "@/features/checkout/components/AddressPicker";
+import {
+  NEW_ADDRESS,
+  preferredAddress,
+  toShippingInput,
+} from "@/features/checkout/address";
 import { useCartQuery } from "@/services/cart.api";
 import { useCreateOrderMutation } from "@/services/order.api";
 import {
@@ -38,11 +45,21 @@ export default function Checkout() {
   const [createOrder] = useCreateOrderMutation();
   const [createPayment] = useCreatePaymentMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+  const [addAddress] = useAddAddressMutation();
 
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState<ShippingAddressInput | null>(null);
   const [alert, setAlert] = useState<string | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+  const [saveForNextTime, setSaveForNextTime] = useState(true);
+
+  const saved = user?.addresses ?? [];
+  const [choice, setChoice] = useState<string | null>(null);
+
+  // Derived rather than synchronised: the preferred address is only a default
+  // until an explicit choice exists, and addresses arrive after first render.
+  const selection = choice ?? preferredAddress(saved)?._id ?? NEW_ADDRESS;
+  const usingSaved = selection !== NEW_ADDRESS;
 
   const {
     register,
@@ -69,8 +86,27 @@ export default function Checkout() {
 
   const totals = cart.totals;
 
-  const submitAddress = (values: ShippingAddressInput) => {
+  const submitAddress = async (values: ShippingAddressInput) => {
     setAddress(values);
+    setAlert(null);
+    setStep(1);
+
+    // Saving is best effort: a failure here must not block a checkout that is
+    // otherwise ready to go.
+    if (saveForNextTime) {
+      try {
+        await addAddress(values).unwrap();
+      } catch {
+        // The address is still used for this order.
+      }
+    }
+  };
+
+  const useSavedAddress = () => {
+    const chosen = saved.find((entry) => entry._id === selection);
+    if (!chosen) return;
+
+    setAddress(toShippingInput(chosen));
     setAlert(null);
     setStep(1);
   };
@@ -188,14 +224,36 @@ export default function Checkout() {
           )}
 
           {step === 0 && (
-            <form
-              onSubmit={(event) => void handleSubmit(submitAddress)(event)}
-              className="flex flex-col gap-5"
-            >
+            <div className="flex flex-col gap-6">
               <h2 className="text-title text-lg font-medium">
                 Where should this go?
               </h2>
 
+              {saved.length > 0 && (
+                <>
+                  <AddressPicker
+                    addresses={saved}
+                    selectedId={selection}
+                    onSelect={setChoice}
+                  />
+
+                  {usingSaved && (
+                    <Button
+                      size="lg"
+                      onClick={useSavedAddress}
+                      className="self-start px-10"
+                    >
+                      Continue to review
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {!usingSaved && (
+            <form
+              onSubmit={(event) => void handleSubmit(submitAddress)(event)}
+              className="flex flex-col gap-5"
+            >
               <Field label="Street" htmlFor="street" error={errors.street?.message}>
                 <Input
                   id="street"
@@ -252,10 +310,22 @@ export default function Checkout() {
                 </Field>
               </div>
 
+              <label className="mt-1 flex cursor-pointer items-center gap-2.5 text-[14px]">
+                <input
+                  type="checkbox"
+                  checked={saveForNextTime}
+                  onChange={(event) => setSaveForNextTime(event.target.checked)}
+                  className="accent-accent h-4 w-4"
+                />
+                Save this address for next time
+              </label>
+
               <Button type="submit" size="lg" className="mt-2 self-start px-10">
                 Continue to review
               </Button>
             </form>
+              )}
+            </div>
           )}
 
           {step > 0 && address && (
@@ -286,19 +356,40 @@ export default function Checkout() {
                 </div>
               </div>
 
-              <ul className="mt-6 divide-y divide-line border-y border-line">
+              <ul className="divide-line border-line mt-6 divide-y border-y">
                 {cart.cart.items.map((line) => (
                   <li
                     key={line.productId}
-                    className="flex items-center justify-between gap-4 py-4"
+                    className="flex items-center gap-4 py-4"
                   >
-                    <span className="text-[14px]">
-                      {line.title ?? "Unavailable"}
-                      <span className="tnum ml-2 text-ink-muted">
-                        ×{line.quantity}
+                    <div className="bg-sunken h-14 w-14 shrink-0 overflow-hidden rounded-sm">
+                      {line.image ? (
+                        <img
+                          src={line.image}
+                          alt={line.title ?? ""}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-ink-subtle grid h-full place-items-center">
+                          <ImageOff className="h-4 w-4" strokeWidth={1.5} />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="text-title truncate text-[15px] font-medium">
+                        {line.title ?? "Unavailable"}
                       </span>
-                    </span>
-                    <span className="tnum text-[14px]">
+                      <span className="tnum text-ink-muted text-[13px]">
+                        {line.quantity} ×{" "}
+                        {line.price
+                          ? formatMoney(line.price.amount, line.price.currency)
+                          : "—"}
+                      </span>
+                    </div>
+
+                    <span className="tnum shrink-0 text-[15px]">
                       {line.lineTotal === null
                         ? "—"
                         : formatMoney(line.lineTotal, totals.currency)}

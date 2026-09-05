@@ -8,36 +8,46 @@ const addressSchema = new mongoose.Schema({
   country: String,
 });
 
+// Items snapshot the product as it was when the order was placed. A seller can
+// rename a product, drop its price or delete it outright; none of that may
+// rewrite history on an order somebody already paid for.
+const orderItemSchema = new mongoose.Schema(
+  {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    title: String,
+    image: String,
+    seller: mongoose.Schema.Types.ObjectId,
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    // Unit price, not the line total. The line total is amount * quantity.
+    price: {
+      amount: {
+        type: Number,
+        required: true,
+      },
+      currency: {
+        type: String,
+        required: true,
+        enum: ["USD", "INR"],
+      },
+    },
+  },
+  { _id: true },
+);
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
-    items: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          default: 1,
-          min: 1,
-        },
-        price: {
-          amount: {
-            type: Number,
-            required: true,
-          },
-          currency: {
-            type: String,
-            required: true,
-            enum: ["USD", "INR"],
-          },
-        },
-      },
-    ],
+    items: [orderItemSchema],
     status: {
       type: String,
       enum: ["PENDING", "CONFIRMED", "CANCELLED", "SHIPPED", "DELIVERED"],
@@ -60,6 +70,8 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+orderSchema.index({ user: 1, createdAt: -1 });
 
 const orderModel = mongoose.model("order", orderSchema);
 

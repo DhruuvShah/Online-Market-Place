@@ -37,6 +37,9 @@ describe("notification listeners", () => {
   it("subscribes to every event it is expected to handle", () => {
     expect([...mockHandlers.keys()].sort()).toEqual([
       "AUTH_NOTIFICATION.USER_CREATED",
+      "ORDER_NOTIFICATION.ORDER_CANCELLED",
+      "ORDER_NOTIFICATION.ORDER_PLACED",
+      "ORDER_NOTIFICATION.SELLER_ORDER_RECEIVED",
       "PAYMENT_NOTIFICATION.PAYMENT_COMPLETED",
       "PAYMENT_NOTIFICATION.PAYMENT_FAILED",
       "PAYMENT_NOTIFICATION.PAYMENT_INITIATED",

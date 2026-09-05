@@ -4,8 +4,13 @@
 
 **Before you start:** the product schema has **no category field**. Categories
 below are for *your* organisation and for choosing coherent photography — they
-are not stored and cannot be filtered on. Search matches title and description
-only, so each description deliberately contains the words a buyer would type.
+are not stored and cannot be filtered on.
+
+Search matches title and description, on **partial words** — every whitespace
+separated token has to appear somewhere in one of the two, so "chai" finds the
+Aeron Chair and "marshall speaker" narrows to the Marshalls. Title matches rank
+above description-only matches. Each description below still deliberately
+contains the words a buyer would reach for.
 
 Descriptions are all under the backend's 500-character limit. Prices are in
 rupees. Currency is INR.

@@ -8,6 +8,36 @@ const CART_SERVICE_URL =
 const PRODUCT_SERVICE_URL =
   process.env.PRODUCT_SERVICE_URL || "http://localhost:3001";
 
+// The notification service renders the whole receipt from this payload, so it
+// carries everything an email needs and never calls back into another service.
+function notificationPayload(order, user) {
+  return {
+    email: user.email,
+    username: user.username,
+    orderId: String(order._id),
+    status: order.status,
+    placedAt: order.createdAt,
+    currency: order.totalPrice.currency,
+    total: order.totalPrice.amount,
+    items: order.items.map((item) => ({
+      title: item.title,
+      image: item.image,
+      quantity: item.quantity,
+      amount: item.price.amount,
+      currency: item.price.currency,
+    })),
+    shippingAddress: order.shippingAddress
+      ? {
+          street: order.shippingAddress.street,
+          city: order.shippingAddress.city,
+          state: order.shippingAddress.state,
+          zip: order.shippingAddress.zip,
+          country: order.shippingAddress.country,
+        }
+      : null,
+  };
+}
+
 async function createOrder(req, res) {
   const user = req.user;
   const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
@@ -46,14 +76,19 @@ async function createOrder(req, res) {
         throw error;
       }
 
-      const itemTotal = product.price.amount * item.quantity;
-      priceAmount += itemTotal;
+      priceAmount += product.price.amount * item.quantity;
+
+      const image = product.images?.[0];
 
       return {
         product: item.productId,
+        title: product.title,
+        image: image?.thumbnail || image?.url,
+        seller: product.seller,
         quantity: item.quantity,
+        // Unit price. Consumers multiply by quantity for the line total.
         price: {
-          amount: itemTotal,
+          amount: product.price.amount,
           currency: product.price.currency,
         },
       };
@@ -67,7 +102,7 @@ async function createOrder(req, res) {
       status: "PENDING",
       totalPrice: {
         amount: priceAmount,
-        currency: "INR", // assuming all products are in USD for simplicity
+        currency: "INR",
       },
       shippingAddress: {
         street: req.body.shippingAddress.street,
@@ -79,6 +114,10 @@ async function createOrder(req, res) {
     });
 
     await publishToOutbox("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+    await publishToOutbox(
+      "ORDER_NOTIFICATION.ORDER_PLACED",
+      notificationPayload(order, user),
+    );
 
     try {
       await axios.delete(`${CART_SERVICE_URL}/api/cart`, {
@@ -115,6 +154,7 @@ async function getMyOrders(req, res) {
   try {
     const orders = await orderModel
       .find({ user: user.id })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
@@ -192,6 +232,11 @@ async function cancelOrderById(req, res) {
     } catch (err) {
       console.error("Failed to release stock on cancel:", err.message);
     }
+
+    await publishToOutbox(
+      "ORDER_NOTIFICATION.ORDER_CANCELLED",
+      notificationPayload(order, user),
+    );
 
     res.status(200).json({ order });
   } catch (err) {

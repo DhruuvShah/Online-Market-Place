@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
-import { ReceiptText } from "lucide-react";
+import { Mail, MapPin, ReceiptText, Search, User } from "lucide-react";
 import { useSellerOrdersQuery } from "@/services/seller.api";
+import type { SellerOrder } from "@/services/seller.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { OrderItemList } from "@/features/orders/components/OrderItemList";
 import { orderStatusLabels } from "@/features/orders/orderStatus";
+import { Input } from "@/components/ui/Field";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -17,24 +20,148 @@ const filters: (OrderStatus | "ALL")[] = [
   "CANCELLED",
 ];
 
+const buyerName = (user: SellerOrder["user"]) => {
+  if (!user) return "Deleted account";
+  const { firstName, lastName } = user.fullName ?? {};
+  const full = [firstName, lastName].filter(Boolean).join(" ");
+  return full || user.username;
+};
+
+const sellerTotal = (order: SellerOrder) =>
+  order.items.reduce((sum, item) => sum + item.price.amount * item.quantity, 0);
+
+const unitsIn = (order: SellerOrder) =>
+  order.items.reduce((sum, item) => sum + item.quantity, 0);
+
+function Detail({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-eyebrow text-ink-subtle flex items-center gap-1.5">
+        {icon}
+        {label}
+      </span>
+      <div className="text-[14px] leading-relaxed">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * One card per order, carrying everything needed to pack and post it: who
+ * bought it, exactly which of your products and how many, what they paid, and
+ * where it goes. Items are already filtered to this seller by the dashboard.
+ */
+function OrderCard({ order }: { order: SellerOrder }) {
+  const address = order.shippingAddress;
+  const units = unitsIn(order);
+
+  return (
+    <li className="border-line rounded-md border p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="tnum text-[13px] font-medium">
+            {order._id.slice(-12).toUpperCase()}
+          </span>
+          <span className="text-ink-muted text-[13px]">
+            {formatDate(order.createdAt)} · {units}{" "}
+            {units === 1 ? "unit" : "units"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <OrderStatusBadge status={order.status} />
+          <span className="tnum text-[17px]">
+            {formatMoney(sellerTotal(order), order.totalPrice.currency)}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <OrderItemList items={order.items} linkToProduct={false} />
+      </div>
+
+      <div className="border-line mt-6 grid gap-6 border-t pt-6 sm:grid-cols-2">
+        <Detail
+          icon={<User className="h-3 w-3" strokeWidth={2} />}
+          label="Buyer"
+        >
+          <p className="font-medium">{buyerName(order.user)}</p>
+          {order.user?.email && (
+            <a
+              href={`mailto:${order.user.email}`}
+              className="text-ink-muted hover:text-accent mt-1 inline-flex items-center gap-1.5 text-[13px] transition-colors"
+            >
+              <Mail className="h-3 w-3" strokeWidth={2} />
+              {order.user.email}
+            </a>
+          )}
+        </Detail>
+
+        <Detail
+          icon={<MapPin className="h-3 w-3" strokeWidth={2} />}
+          label="Ship to"
+        >
+          {address ? (
+            <address className="text-ink-muted not-italic">
+              {address.street}
+              <br />
+              {address.city}, {address.state} {address.zip}
+              <br />
+              {address.country}
+            </address>
+          ) : (
+            <span className="text-ink-subtle">No address on file</span>
+          )}
+        </Detail>
+      </div>
+    </li>
+  );
+}
+
 export default function SellerOrders() {
   const { data: orders, isLoading } = useSellerOrdersQuery();
   const [status, setStatus] = useState<OrderStatus | "ALL">("ALL");
+  const [term, setTerm] = useState("");
 
   const visible = useMemo(() => {
     const list = orders ?? [];
-    return status === "ALL"
-      ? list
-      : list.filter((order) => order.status === status);
-  }, [orders, status]);
+    const needle = term.trim().toLowerCase();
+
+    return list.filter((order) => {
+      if (status !== "ALL" && order.status !== status) return false;
+      if (!needle) return true;
+
+      // Sellers look up an order by whatever they have to hand: the reference
+      // from an email, the buyer, or the product they are about to pack.
+      const haystack = [
+        order._id,
+        buyerName(order.user),
+        order.user?.email,
+        order.shippingAddress?.city,
+        ...order.items.map((item) => item.title ?? ""),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(needle);
+    });
+  }, [orders, status, term]);
 
   if (isLoading) {
     return (
       <div className="shell py-12">
         <Skeleton className="h-10 w-48" />
         <div className="mt-10 flex flex-col gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full" />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-52 w-full" />
           ))}
         </div>
       </div>
@@ -51,16 +178,30 @@ export default function SellerOrders() {
     );
   }
 
+  const revenue = visible.reduce((sum, order) => sum + sellerTotal(order), 0);
+
   return (
     <div className="shell py-12 sm:py-16">
       <p className="text-eyebrow text-ink-subtle">Sales</p>
       <h1 className="text-section mt-4">Orders</h1>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="relative mt-8 max-w-md">
+        <Search className="text-ink-subtle pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2" />
+        <Input
+          value={term}
+          onChange={(event) => setTerm(event.target.value)}
+          placeholder="Search by buyer, product, city or reference"
+          aria-label="Search orders"
+          className="pl-10"
+        />
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
         {filters.map((option) => (
           <button
             key={option}
             onClick={() => setStatus(option)}
+            aria-pressed={status === option}
             className={`rounded-full border px-3.5 py-1.5 text-[13px] transition-colors ${
               status === option
                 ? "border-ink bg-ink text-canvas"
@@ -72,65 +213,25 @@ export default function SellerOrders() {
         ))}
       </div>
 
-      <p className="mt-5 text-[13px] text-ink-muted">
+      <p className="text-ink-muted mt-5 text-[13px]">
         {visible.length} {visible.length === 1 ? "order" : "orders"}
+        {visible.length > 0 && (
+          <>
+            {" · "}
+            <span className="tnum">{formatMoney(revenue)}</span> from your items
+          </>
+        )}
       </p>
 
       {visible.length === 0 ? (
-        <p className="mt-10 text-[14px] text-ink-muted">
-          No orders with this status.
+        <p className="text-ink-muted mt-10 text-[14px]">
+          No orders match {term ? `“${term}”` : "this status"}.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-line border-y border-line">
-          {visible.map((order) => {
-            const sellerTotal = order.items.reduce(
-              (sum, item) => sum + item.price.amount * item.quantity,
-              0,
-            );
-
-            return (
-              <li key={order._id} className="flex flex-col gap-3 py-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="tnum text-[14px] font-medium">
-                      {order._id.slice(-12).toUpperCase()}
-                    </span>
-                    <span className="text-[13px] text-ink-muted">
-                      {formatDate(order.createdAt)}
-                      {order.user &&
-                        ` · ${order.user.fullName?.firstName ?? order.user.username}`}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <OrderStatusBadge status={order.status} />
-                    <span className="tnum text-[15px]">
-                      {formatMoney(sellerTotal, order.totalPrice.currency)}
-                    </span>
-                  </div>
-                </div>
-
-                <ul className="flex flex-col gap-1">
-                  {order.items.map((item, index) => (
-                    <li
-                      key={`${item.product}-${index}`}
-                      className="text-[13px] text-ink-muted"
-                    >
-                      <span className="tnum">×{item.quantity}</span> ·{" "}
-                      {formatMoney(item.price.amount, item.price.currency)} each
-                    </li>
-                  ))}
-                </ul>
-
-                {order.shippingAddress && (
-                  <address className="text-[13px] not-italic text-ink-subtle">
-                    Ships to {order.shippingAddress.city},{" "}
-                    {order.shippingAddress.state} {order.shippingAddress.zip}
-                  </address>
-                )}
-              </li>
-            );
-          })}
+        <ul className="mt-6 flex flex-col gap-4">
+          {visible.map((order) => (
+            <OrderCard key={order._id} order={order} />
+          ))}
         </ul>
       )}
     </div>

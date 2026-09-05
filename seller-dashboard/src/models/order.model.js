@@ -21,11 +21,17 @@ const orderSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           required: true,
         },
+        // Snapshot of the product at purchase time, replicated from the order
+        // service so the dashboard never has to join back to the catalog.
+        title: String,
+        image: String,
+        seller: mongoose.Schema.Types.ObjectId,
         quantity: {
           type: Number,
           default: 1,
           min: 1,
         },
+        // Unit price. Line total is amount * quantity.
         price: {
           amount: {
             type: Number,

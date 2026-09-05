@@ -166,25 +166,40 @@ async function getUserAddresses(req, res) {
   });
 }
 
+const addressKey = (address) =>
+  [address.street, address.city, address.state, address.zip, address.country]
+    .map((part) => String(part ?? "").trim().toLowerCase())
+    .join("|");
+
 async function addUserAddress(req, res) {
   const id = req.user.id;
 
   const { street, city, state, pincode, country, isDefault } = req.body;
+  const incoming = { street, city, state, zip: pincode, country, isDefault };
+
+  const existing = await userModel.findById(id).select("addresses");
+
+  if (!existing) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  // Checkout saves the address a shopper types, so the same one arrives again
+  // on every repeat order. Hand back the one already on file instead of
+  // filling the address book with copies.
+  const duplicate = existing.addresses.find(
+    (address) => addressKey(address) === addressKey(incoming),
+  );
+
+  if (duplicate) {
+    return res.status(200).json({
+      message: "Address already saved",
+      address: duplicate,
+    });
+  }
 
   const user = await userModel.findOneAndUpdate(
     { _id: id },
-    {
-      $push: {
-        addresses: {
-          street,
-          city,
-          state,
-          zip: pincode,
-          country,
-          isDefault,
-        },
-      },
-    },
+    { $push: { addresses: incoming } },
     { new: true },
   );
 

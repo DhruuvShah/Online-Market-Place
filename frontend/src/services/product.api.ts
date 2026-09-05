@@ -1,5 +1,10 @@
-import type { Product } from "@/types";
+import type { PageMeta, Product, ProductSort } from "@/types";
 import { baseApi } from "./base.api";
+
+export type ProductPage = {
+  products: Product[];
+  meta: PageMeta;
+};
 
 export type UpdateProductBody = {
   title?: string;
@@ -12,15 +17,34 @@ export type ProductQuery = {
   q?: string;
   minprice?: number;
   maxprice?: number;
+  instock?: "true";
+  sort?: Exclude<ProductSort, "relevance">;
   skip?: number;
   limit?: number;
+  ids?: string;
 };
 
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    products: builder.query<Product[], ProductQuery>({
+    products: builder.query<ProductPage, ProductQuery>({
       query: (params) => ({ url: "/api/products", params }),
-      transformResponse: (response: { data: Product[] }) => response.data ?? [],
+      transformResponse: (response: {
+        data: Product[];
+        meta?: PageMeta;
+      }): ProductPage => {
+        const products = response.data ?? [];
+        return {
+          products,
+          // Older deployments answer without meta; derive something usable
+          // rather than leaving pagination undefined.
+          meta: response.meta ?? {
+            total: products.length,
+            skip: 0,
+            limit: products.length,
+            hasMore: false,
+          },
+        };
+      },
       providesTags: ["Product"],
     }),
 

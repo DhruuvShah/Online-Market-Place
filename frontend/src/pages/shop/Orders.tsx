@@ -3,12 +3,25 @@ import { Link } from "react-router-dom";
 import { Package } from "lucide-react";
 import { useMyOrdersQuery } from "@/services/order.api";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
+import { OrderItemStack } from "@/features/orders/components/OrderItemList";
+import type { OrderItem } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatDate, formatMoney } from "@/lib/format";
 
 const PAGE_SIZE = 10;
+
+/** "Aeron Chair and 2 more" reads better in a list than a bare order number. */
+function summarise(items: OrderItem[]) {
+  const first = items[0]?.title;
+  if (!first) {
+    return `${items.length} ${items.length === 1 ? "item" : "items"}`;
+  }
+
+  const rest = items.length - 1;
+  return rest > 0 ? `${first} and ${rest} more` : first;
+}
 
 export default function Orders() {
   const [page, setPage] = useState(1);
@@ -59,16 +72,19 @@ export default function Orders() {
           <li key={order._id}>
             <Link
               to={`/orders/${order._id}`}
-              className="flex flex-col gap-3 py-5 transition-colors hover:bg-raised sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-2"
+              className="hover:bg-raised flex flex-col gap-4 py-5 transition-colors sm:flex-row sm:items-center sm:gap-6 sm:px-2"
             >
-              <div className="flex min-w-0 flex-col gap-1.5">
-                <span className="tnum text-[14px] font-medium">
-                  {order._id.slice(-12).toUpperCase()}
+              <OrderItemStack items={order.items} />
+
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <span className="text-title truncate text-[15px] font-medium">
+                  {summarise(order.items)}
                 </span>
-                <span className="text-[13px] text-ink-muted">
-                  {formatDate(order.createdAt)} ·{" "}
-                  {order.items.length}{" "}
-                  {order.items.length === 1 ? "item" : "items"}
+                <span className="text-ink-muted text-[13px]">
+                  <span className="tnum">
+                    {order._id.slice(-8).toUpperCase()}
+                  </span>{" "}
+                  · {formatDate(order.createdAt)}
                 </span>
               </div>
 

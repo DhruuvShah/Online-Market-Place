@@ -171,4 +171,90 @@ describe("User addresses API", () => {
       expect(res.status).toBe(404);
     });
   });
+
+  describe("POST /api/auth/users/me/addresses — duplicates", () => {
+    const address = {
+      street: "12 Linking Road",
+      city: "Mumbai",
+      state: "Maharashtra",
+      pincode: "400050",
+      country: "India",
+    };
+
+    const post = (cookies, body) =>
+      request(app)
+        .post("/api/auth/users/me/addresses")
+        .set("Cookie", cookies)
+        .send(body);
+
+    it("saves a new address once", async () => {
+      const { cookies } = await seedUserAndLogin({
+        username: "dedupe_one",
+        email: "dedupe_one@example.com",
+      });
+
+      const res = await post(cookies, address);
+
+      expect(res.status).toBe(201);
+      expect(res.body.address).toMatchObject({ zip: "400050", city: "Mumbai" });
+    });
+
+    it("does not store the same address twice", async () => {
+      const { user, cookies } = await seedUserAndLogin({
+        username: "dedupe_two",
+        email: "dedupe_two@example.com",
+      });
+
+      await post(cookies, address).expect(201);
+      const second = await post(cookies, address);
+
+      expect(second.status).toBe(200);
+      expect(second.body.message).toMatch(/already saved/i);
+
+      const stored = await userModel.findById(user._id);
+      expect(stored.addresses).toHaveLength(1);
+    });
+
+    it("ignores case and padding when comparing", async () => {
+      const { user, cookies } = await seedUserAndLogin({
+        username: "dedupe_three",
+        email: "dedupe_three@example.com",
+      });
+
+      await post(cookies, address).expect(201);
+      await post(cookies, {
+        ...address,
+        street: "  12 linking road  ",
+        city: "MUMBAI",
+      }).expect(200);
+
+      const stored = await userModel.findById(user._id);
+      expect(stored.addresses).toHaveLength(1);
+    });
+
+    it("still stores a genuinely different address", async () => {
+      const { user, cookies } = await seedUserAndLogin({
+        username: "dedupe_four",
+        email: "dedupe_four@example.com",
+      });
+
+      await post(cookies, address).expect(201);
+      await post(cookies, { ...address, pincode: "400051" }).expect(201);
+
+      const stored = await userModel.findById(user._id);
+      expect(stored.addresses).toHaveLength(2);
+    });
+
+    it("returns the address already on file so checkout can use it", async () => {
+      const { cookies } = await seedUserAndLogin({
+        username: "dedupe_five",
+        email: "dedupe_five@example.com",
+      });
+
+      const first = await post(cookies, address);
+      const second = await post(cookies, address);
+
+      expect(second.body.address._id).toBe(first.body.address._id);
+    });
+  });
 });

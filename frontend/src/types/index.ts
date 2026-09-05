@@ -65,8 +65,14 @@ export type OrderStatus =
   | "SHIPPED"
   | "DELIVERED";
 
+// title, image and seller are snapshotted by the order service at checkout, so
+// an order keeps showing what was bought even if the listing later changes.
 export type OrderItem = {
+  _id?: string;
   product: string;
+  title?: string;
+  image?: string;
+  seller?: string;
   quantity: number;
   price: Money;
 };
@@ -121,4 +127,20 @@ export type ShippingAddressInput = {
   state: string;
   pincode: string;
   country: string;
+};
+
+export type ProductSort =
+  | "relevance"
+  | "newest"
+  | "price_asc"
+  | "price_desc"
+  | "title";
+
+export type ProductView = "grid" | "list" | "large";
+
+export type PageMeta = {
+  total: number;
+  skip: number;
+  limit: number;
+  hasMore: boolean;
 };

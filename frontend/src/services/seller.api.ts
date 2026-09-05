@@ -1,10 +1,48 @@
 import type { Order, Product } from "@/types";
 import { baseApi } from "./base.api";
 
+export type TopProduct = {
+  id: string;
+  title: string;
+  image?: string;
+  sold: number;
+  revenue: number;
+};
+
+export type RevenuePoint = {
+  date: string;
+  revenue: number;
+  orders: number;
+  units: number;
+};
+
+export type StockLevel = {
+  id: string;
+  title: string;
+  stock: number;
+};
+
 export type SellerMetrics = {
   sales: number;
   revenue: number;
-  topProducts: { id: string; title: string; sold: number }[];
+  orders: number;
+  averageOrderValue: number;
+  productCount: number;
+  recentOrderCount: number;
+  topProducts: TopProduct[];
+  revenueSeries: RevenuePoint[];
+  stockLevels: StockLevel[];
+  stockSummary: {
+    inStock: number;
+    lowStock: number;
+    outOfStock: number;
+    units: number;
+  };
+};
+
+export type SellerProductQuery = {
+  q?: string;
+  stock?: "in" | "low" | "out";
 };
 
 export type SellerOrder = Omit<Order, "user"> & {
@@ -28,8 +66,11 @@ export const sellerApi = baseApi.injectEndpoints({
       providesTags: ["SellerOrder"],
     }),
 
-    sellerProducts: builder.query<Product[], void>({
-      query: () => "/api/seller/dashboard/products",
+    sellerProducts: builder.query<Product[], SellerProductQuery | void>({
+      query: (params) => ({
+        url: "/api/seller/dashboard/products",
+        params: params ?? undefined,
+      }),
       providesTags: ["SellerProduct"],
     }),
   }),

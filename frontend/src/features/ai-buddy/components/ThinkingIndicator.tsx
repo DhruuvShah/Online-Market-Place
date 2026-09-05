@@ -1,24 +1,23 @@
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
-
-const stages = [
-  "Reading your message",
-  "Searching the catalog",
-  "Checking what is in stock",
-  "Putting an answer together",
-];
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  PHRASE_INTERVAL,
+  thinkingPhrase,
+} from "@/features/ai-buddy/thinkingPhrases";
 
 export function ThinkingIndicator() {
   const reduced = useReducedMotion();
-  const [stage, setStage] = useState(0);
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setStage((current) => Math.min(current + 1, stages.length - 1));
-    }, 1600);
-
+    const timer = setInterval(
+      () => setStep((current) => current + 1),
+      PHRASE_INTERVAL,
+    );
     return () => clearInterval(timer);
   }, []);
+
+  const phrase = thinkingPhrase(step);
 
   return (
     <motion.div
@@ -27,7 +26,6 @@ export function ThinkingIndicator() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
       className="mt-4 flex items-center gap-3"
-      aria-live="polite"
     >
       <span className="border-line bg-raised inline-flex items-center gap-1.5 rounded-full border px-3 py-2">
         {[0, 1, 2].map((dot) => (
@@ -53,15 +51,27 @@ export function ThinkingIndicator() {
         ))}
       </span>
 
-      <motion.span
-        key={stage}
-        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="text-ink-subtle text-[13px]"
+      {/* aria-live sits on the wrapper, not the animated child: the child is
+          replaced on every step and a swapped-out live region goes silent. */}
+      <span
+        className="text-ink-subtle relative text-[13px]"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
       >
-        {stages[stage]}…
-      </motion.span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={phrase}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="block"
+          >
+            {phrase}…
+          </motion.span>
+        </AnimatePresence>
+      </span>
     </motion.div>
   );
 }
