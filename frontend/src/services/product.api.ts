@@ -48,6 +48,20 @@ export const productApi = baseApi.injectEndpoints({
       providesTags: ["Product"],
     }),
 
+    // The seller's own inventory, straight from the catalog service. The
+    // dashboard projection lags behind edits; this never does.
+    myProducts: builder.query<
+      Product[],
+      { q?: string; stock?: "in" | "low" | "out" } | void
+    >({
+      query: (params) => ({
+        url: "/api/products/seller",
+        params: params ?? undefined,
+      }),
+      transformResponse: (response: { data: Product[] }) => response.data ?? [],
+      providesTags: ["SellerProduct"],
+    }),
+
     product: builder.query<Product, string>({
       query: (id) => `/api/products/${id}`,
       transformResponse: (response: { data: Product }) => response.data,
@@ -116,6 +130,7 @@ export const productApi = baseApi.injectEndpoints({
 
 export const {
   useProductsQuery,
+  useMyProductsQuery,
   useProductQuery,
   useCreateProductMutation,
   useAddProductImagesMutation,

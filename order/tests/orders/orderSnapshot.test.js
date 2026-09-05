@@ -257,3 +257,65 @@ describe("GET /api/orders/me ordering", () => {
     expect(res.body.orders[1]._id).toBe(first.body.order._id);
   });
 });
+
+describe("order status projection", () => {
+  beforeEach(async () => {
+    await orderModel.deleteMany({});
+    await outboxModel.deleteMany({});
+  });
+
+  it("announces a cancellation so the dashboard stops showing it as pending", async () => {
+    mockCart([{ productId: PRODUCT_ID, quantity: 1 }]);
+    const created = await placeOrder().expect(201);
+    await outboxModel.deleteMany({});
+
+    await request(app)
+      .post(`/api/orders/${created.body.order._id}/cancel`)
+      .set("Cookie", getAuthCookie())
+      .expect(200);
+
+    const event = await outboxFor("ORDER_SELLER_DASHBOARD.ORDER_UPDATED");
+    expect(event).not.toBeNull();
+    expect(event.payload.status).toBe("CANCELLED");
+  });
+
+  it("announces an address correction", async () => {
+    mockCart([{ productId: PRODUCT_ID, quantity: 1 }]);
+    const created = await placeOrder().expect(201);
+    await outboxModel.deleteMany({});
+
+    await request(app)
+      .patch(`/api/orders/${created.body.order._id}/address`)
+      .set("Cookie", getAuthCookie())
+      .send({ shippingAddress: { ...address, city: "Pune" } })
+      .expect(200);
+
+    const event = await outboxFor("ORDER_SELLER_DASHBOARD.ORDER_UPDATED");
+    expect(event.payload.shippingAddress.city).toBe("Pune");
+  });
+
+  it("says nothing when the cancel was refused", async () => {
+    const order = await orderModel.create({
+      user: DEFAULT_USER_ID,
+      status: "DELIVERED",
+      items: [
+        {
+          product: PRODUCT_ID,
+          title: "Aeron Chair",
+          quantity: 1,
+          price: { amount: 1000, currency: "INR" },
+        },
+      ],
+      totalPrice: { amount: 1000, currency: "INR" },
+      shippingAddress: { ...address, zip: address.pincode },
+    });
+    await outboxModel.deleteMany({});
+
+    await request(app)
+      .post(`/api/orders/${order._id}/cancel`)
+      .set("Cookie", getAuthCookie())
+      .expect(409);
+
+    expect(await outboxFor("ORDER_SELLER_DASHBOARD.ORDER_UPDATED")).toBeNull();
+  });
+});

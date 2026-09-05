@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ImageOff, Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import { useSellerProductsQuery } from "@/services/seller.api";
-import { useDeleteProductMutation } from "@/services/product.api";
+import {
+  useDeleteProductMutation,
+  useMyProductsQuery,
+} from "@/services/product.api";
 import { ViewToggle } from "@/features/products/components/ViewToggle";
 import { useProductView } from "@/features/products/hooks/useProductView";
 import { Button } from "@/components/ui/Button";
@@ -123,7 +125,7 @@ function InventoryItem({
 
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <Link
-            to={`/products/${product._id}`}
+            to={`/seller/products/${product._id}/edit`}
             className="text-title hover:text-accent truncate text-[15px] font-medium"
           >
             {product.title}
@@ -152,7 +154,7 @@ function InventoryItem({
 
       <div className="flex flex-1 flex-col gap-2">
         <Link
-          to={`/products/${product._id}`}
+          to={`/seller/products/${product._id}/edit`}
           className="text-title hover:text-accent text-[15px] font-medium"
         >
           {product.title}
@@ -189,12 +191,12 @@ export default function Products() {
 
   // Searching on the server keeps the seller's own catalog authoritative even
   // once it outgrows a single response.
-  const { data: products, isLoading, isFetching } = useSellerProductsQuery({
+  const { data: products, isLoading, isFetching } = useMyProductsQuery({
     ...(debouncedTerm.trim() ? { q: debouncedTerm.trim() } : {}),
     ...(stock ? { stock } : {}),
   });
 
-  const { data: everything } = useSellerProductsQuery();
+  const { data: everything } = useMyProductsQuery();
 
   const remove = async (id: string, title: string) => {
     setPendingId(id);

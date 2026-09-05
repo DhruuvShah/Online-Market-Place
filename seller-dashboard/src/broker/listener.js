@@ -107,6 +107,13 @@ module.exports = async function () {
     await productModel.deleteOne({ _id: doc._id });
   });
 
+  // Status changes only. The seller was emailed when the order was placed, so
+  // this replicates without notifying again.
+  subscribeToQueue(
+    "ORDER_SELLER_DASHBOARD.ORDER_UPDATED",
+    replicate(orderModel),
+  );
+
   subscribeToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", async (doc) => {
     await replicate(orderModel)(doc);
 

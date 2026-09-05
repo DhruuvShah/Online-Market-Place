@@ -30,6 +30,7 @@ describe("seller dashboard projection listeners", () => {
     expect([...mockHandlers.keys()].sort()).toEqual([
       "AUTH_SELLER_DASHBOARD.USER_CREATED",
       "ORDER_SELLER_DASHBOARD.ORDER_CREATED",
+      "ORDER_SELLER_DASHBOARD.ORDER_UPDATED",
       "PAYMENT_SELLER_DASHBOARD.PAYMENT_CREATED",
       "PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATED",
       "PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED",
@@ -246,6 +247,87 @@ describe("seller dashboard projection listeners", () => {
       await expect(
         emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED", { _id: id }),
       ).resolves.not.toThrow();
+    });
+  });
+
+  describe("order status changes", () => {
+    const seedOrder = async (status = "PENDING") => {
+      const order = {
+        _id: new mongoose.Types.ObjectId().toHexString(),
+        user: new mongoose.Types.ObjectId().toHexString(),
+        items: [
+          {
+            product: new mongoose.Types.ObjectId().toHexString(),
+            quantity: 1,
+            price: { amount: 500, currency: "INR" },
+          },
+        ],
+        status,
+        totalPrice: { amount: 500, currency: "INR" },
+        shippingAddress: {
+          street: "1 Test St",
+          city: "Pune",
+          state: "MH",
+          zip: "411001",
+          country: "IN",
+        },
+      };
+
+      await emit("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+      return order;
+    };
+
+    it("moves a paid order off PENDING", async () => {
+      // Without this the dashboard shows every order as awaiting payment
+      // forever, and revenue never leaves zero.
+      const order = await seedOrder();
+
+      await emit("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", {
+        ...order,
+        status: "CONFIRMED",
+      });
+
+      const stored = await orderModel.findById(order._id);
+      expect(stored.status).toBe("CONFIRMED");
+    });
+
+    it("replicates a cancellation", async () => {
+      const order = await seedOrder();
+
+      await emit("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", {
+        ...order,
+        status: "CANCELLED",
+      });
+
+      expect((await orderModel.findById(order._id)).status).toBe("CANCELLED");
+    });
+
+    it("replicates a shipping address correction", async () => {
+      const order = await seedOrder();
+
+      await emit("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", {
+        ...order,
+        shippingAddress: { ...order.shippingAddress, city: "Mumbai" },
+      });
+
+      expect((await orderModel.findById(order._id)).shippingAddress.city).toBe(
+        "Mumbai",
+      );
+    });
+
+    it("creates the projection if an update arrives before its create", async () => {
+      const id = new mongoose.Types.ObjectId().toHexString();
+
+      await emit("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", {
+        _id: id,
+        user: new mongoose.Types.ObjectId().toHexString(),
+        items: [],
+        status: "CONFIRMED",
+        totalPrice: { amount: 100, currency: "INR" },
+        shippingAddress: { street: "x", city: "y", state: "z", zip: "1", country: "IN" },
+      });
+
+      expect(await orderModel.findById(id)).not.toBeNull();
     });
   });
 });

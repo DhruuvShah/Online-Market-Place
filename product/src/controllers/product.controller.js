@@ -305,17 +305,46 @@ async function deleteProduct(req, res) {
   return res.status(200).json({ message: "Product deleted" });
 }
 
+const LOW_STOCK = 5;
+
+// A seller's own inventory reads straight from the catalog rather than from the
+// dashboard projection: this is the system of record, so a photo added a second
+// ago is already here and nothing can be stale.
 async function getProductsBySeller(req, res) {
   const seller = req.user;
 
-  const { skip = 0, limit = 20 } = req.query;
+  const { q, stock, skip = 0, limit = MAX_LIMIT } = req.query;
 
-  const products = await productModel
-    .find({ seller: seller.id })
-    .skip(skip)
-    .limit(Math.min(limit, 20));
+  const filter = { seller: seller.id };
 
-  return res.status(200).json({ data: products });
+  const term = typeof q === "string" ? q.trim() : "";
+  const clauses = term ? searchClauses(term) : [];
+
+  if (clauses.length) {
+    filter.$and = clauses;
+  }
+
+  if (stock === "out") filter.stock = { $lte: 0 };
+  else if (stock === "low") filter.stock = { $gt: 0, $lte: LOW_STOCK };
+  else if (stock === "in") filter.stock = { $gt: LOW_STOCK };
+
+  const pageSize = Math.min(Math.max(Number(limit) || MAX_LIMIT, 1), MAX_LIMIT);
+  const offset = Math.max(Number(skip) || 0, 0);
+
+  const [products, total] = await Promise.all([
+    productModel.find(filter).sort({ _id: -1 }).skip(offset).limit(pageSize),
+    productModel.countDocuments(filter),
+  ]);
+
+  return res.status(200).json({
+    data: products,
+    meta: {
+      total,
+      skip: offset,
+      limit: pageSize,
+      hasMore: offset + pageSize < total,
+    },
+  });
 }
 
 async function reserveStock(req, res) {

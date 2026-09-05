@@ -233,6 +233,7 @@ async function cancelOrderById(req, res) {
       console.error("Failed to release stock on cancel:", err.message);
     }
 
+    await publishToOutbox("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", order);
     await publishToOutbox(
       "ORDER_NOTIFICATION.ORDER_CANCELLED",
       notificationPayload(order, user),
@@ -281,6 +282,7 @@ async function updateOrderAddress(req, res) {
     };
 
     await order.save();
+    await publishToOutbox("ORDER_SELLER_DASHBOARD.ORDER_UPDATED", order);
 
     res.status(200).json({ order });
   } catch (err) {

@@ -4,8 +4,8 @@ import { AlertTriangle, Boxes, Plus, TrendingUp } from "lucide-react";
 import {
   useSellerMetricsQuery,
   useSellerOrdersQuery,
-  useSellerProductsQuery,
 } from "@/services/seller.api";
+import { useMyProductsQuery } from "@/services/product.api";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { OrderStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { OrderItemStack } from "@/features/orders/components/OrderItemList";
@@ -48,7 +48,7 @@ function Section({
 export default function Overview() {
   const { user } = useAuth();
   const { data: metrics, isLoading: metricsLoading } = useSellerMetricsQuery();
-  const { data: products, isLoading: productsLoading } = useSellerProductsQuery();
+  const { data: products, isLoading: productsLoading } = useMyProductsQuery();
   const { data: orders } = useSellerOrdersQuery();
 
   const catalog = useMemo(() => products ?? [], [products]);
@@ -62,20 +62,25 @@ export default function Overview() {
     [metrics],
   );
 
+  // Built from the live catalog rather than the dashboard projection, so a
+  // restock or a new listing shows up here immediately.
   const stockBars = useMemo(
     () =>
-      (metrics?.stockLevels ?? []).slice(0, STOCK_BARS).map((level) => ({
-        id: level.id,
-        label: level.title,
-        value: level.stock,
-        tone:
-          level.stock <= 0
-            ? ("danger" as const)
-            : level.stock <= LOW_STOCK
-              ? ("warn" as const)
-              : ("default" as const),
-      })),
-    [metrics],
+      [...catalog]
+        .sort((a, b) => b.stock - a.stock)
+        .slice(0, STOCK_BARS)
+        .map((product) => ({
+          id: product._id,
+          label: product.title,
+          value: product.stock,
+          tone:
+            product.stock <= 0
+              ? ("danger" as const)
+              : product.stock <= LOW_STOCK
+                ? ("warn" as const)
+                : ("default" as const),
+        })),
+    [catalog],
   );
 
   if (metricsLoading || productsLoading) {
@@ -112,7 +117,16 @@ export default function Overview() {
   );
   const soldOut = catalog.filter((product) => product.stock <= 0);
   const recentOrders = (orders ?? []).slice(0, 5);
-  const summary = metrics?.stockSummary;
+  const summary = catalog.reduce(
+    (totals, product) => {
+      totals.units += product.stock;
+      if (product.stock <= 0) totals.outOfStock += 1;
+      else if (product.stock <= LOW_STOCK) totals.lowStock += 1;
+      else totals.inStock += 1;
+      return totals;
+    },
+    { inStock: 0, lowStock: 0, outOfStock: 0, units: 0 },
+  );
 
   const stats = [
     { label: "Items sold", value: String(metrics?.sales ?? 0) },
@@ -127,9 +141,7 @@ export default function Overview() {
     {
       label: "Products listed",
       value: String(catalog.length),
-      hint: summary
-        ? `${summary.units} units in stock`
-        : undefined,
+      hint: `${summary.units} units in stock`,
       tone:
         soldOut.length > 0 ? ("warn" as const) : ("default" as const),
     },
@@ -185,14 +197,12 @@ export default function Overview() {
           </Link>
         }
       >
-        {summary && (
-          <p className="text-ink-muted mb-6 text-[13px]">
+        <p className="text-ink-muted mb-6 text-[13px]">
             <span className="tnum text-ink">{summary.inStock}</span> healthy ·{" "}
             <span className="tnum text-honey">{summary.lowStock}</span> running
             low · <span className="tnum text-accent">{summary.outOfStock}</span>{" "}
             out of stock
-          </p>
-        )}
+        </p>
 
         <BarChart
           bars={stockBars}
@@ -201,10 +211,9 @@ export default function Overview() {
           emptyLabel="Stock levels appear here once you list a product."
         />
 
-        {(metrics?.stockLevels.length ?? 0) > STOCK_BARS && (
+        {catalog.length > STOCK_BARS && (
           <p className="text-ink-subtle mt-5 text-[13px]">
-            Showing your {STOCK_BARS} best-stocked products of{" "}
-            {metrics?.stockLevels.length}.
+            Showing your {STOCK_BARS} best-stocked products of {catalog.length}.
           </p>
         )}
       </Section>

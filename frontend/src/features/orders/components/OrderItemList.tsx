@@ -1,22 +1,27 @@
 import { Link } from "react-router-dom";
 import { ImageOff } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { useOrderItemImages } from "@/features/orders/hooks/useOrderItemImages";
 import type { OrderItem } from "@/types";
 
 export function OrderItemThumb({
   item,
+  fallback,
   className = "h-14 w-14",
 }: {
   item: OrderItem;
+  fallback?: string;
   className?: string;
 }) {
+  const src = item.image ?? fallback;
+
   return (
     <div
       className={`bg-sunken shrink-0 overflow-hidden rounded-sm ${className}`}
     >
-      {item.image ? (
+      {src ? (
         <img
-          src={item.image}
+          src={src}
           alt={item.title ?? ""}
           loading="lazy"
           className="h-full w-full object-cover"
@@ -41,6 +46,8 @@ export function OrderItemList({
   items: OrderItem[];
   linkToProduct?: boolean;
 }) {
+  const fallbacks = useOrderItemImages(items);
+
   return (
     <ul className="divide-line border-line divide-y border-y">
       {items.map((item, index) => {
@@ -61,7 +68,7 @@ export function OrderItemList({
             key={item._id ?? `${item.product}-${index}`}
             className="flex items-center gap-4 py-4"
           >
-            <OrderItemThumb item={item} />
+            <OrderItemThumb item={item} fallback={fallbacks[item.product]} />
 
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               {linkToProduct && item.title ? (
@@ -98,6 +105,7 @@ export function OrderItemStack({
   items: OrderItem[];
   max?: number;
 }) {
+  const fallbacks = useOrderItemImages(items);
   const shown = items.slice(0, max);
   const overflow = items.length - shown.length;
 
@@ -108,7 +116,11 @@ export function OrderItemStack({
           key={item._id ?? `${item.product}-${index}`}
           className="ring-canvas rounded-sm ring-2"
         >
-          <OrderItemThumb item={item} className="h-11 w-11" />
+          <OrderItemThumb
+            item={item}
+            fallback={fallbacks[item.product]}
+            className="h-11 w-11"
+          />
         </div>
       ))}
 

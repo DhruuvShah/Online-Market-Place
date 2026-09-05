@@ -1,8 +1,40 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
-import { OrderItemList, OrderItemStack } from "./OrderItemList";
-import type { OrderItem } from "@/types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ProductPage, ProductQuery } from "@/services/product.api";
+import type { OrderItem, Product } from "@/types";
+
+const useProductsQuery = vi.fn();
+
+vi.mock("@/services/product.api", () => ({
+  useProductsQuery: (query: ProductQuery, options?: { skip?: boolean }) =>
+    useProductsQuery(query, options) as unknown,
+}));
+
+const { OrderItemList, OrderItemStack } = await import("./OrderItemList");
+
+const catalogProduct = (id: string, thumbnail: string): Product => ({
+  _id: id,
+  title: "Later photo",
+  description: "",
+  price: { amount: 100, currency: "INR" },
+  seller: "s1",
+  stock: 3,
+  images: [{ url: `${thumbnail}-full`, thumbnail, id: "f1" }],
+});
+
+const catalogReturns = (products: Product[]) => {
+  const page: ProductPage = {
+    products,
+    meta: { total: products.length, skip: 0, limit: products.length, hasMore: false },
+  };
+  useProductsQuery.mockReturnValue({ data: page });
+};
+
+beforeEach(() => {
+  useProductsQuery.mockReset();
+  useProductsQuery.mockReturnValue({ data: undefined });
+});
 
 const item = (overrides: Partial<OrderItem> = {}): OrderItem => ({
   _id: "i1",
@@ -101,5 +133,71 @@ describe("OrderItemStack", () => {
     render(<OrderItemStack items={[item()]} max={4} />);
 
     expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
+  });
+});
+
+describe("photos added after the order was placed", () => {
+  it("falls back to the product's current photo when the snapshot has none", () => {
+    catalogReturns([catalogProduct("p1", "https://ik/added-later.jpg")]);
+
+    renderList([item({ image: undefined })]);
+
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://ik/added-later.jpg",
+    );
+  });
+
+  it("keeps the snapshot when the order already has one", () => {
+    catalogReturns([catalogProduct("p1", "https://ik/added-later.jpg")]);
+
+    renderList([item({ image: "https://ik/at-checkout.jpg" })]);
+
+    // The receipt shows what was bought, not what the listing looks like now.
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://ik/at-checkout.jpg",
+    );
+  });
+
+  it("asks for nothing when every item already has a photo", () => {
+    renderList([item()]);
+
+    expect(useProductsQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ skip: true }),
+    );
+  });
+
+  it("asks for the missing products in a single batched request", () => {
+    renderList([
+      item({ _id: "i1", product: "p1", image: undefined }),
+      item({ _id: "i2", product: "p2", image: undefined }),
+      item({ _id: "i3", product: "p3" }),
+    ]);
+
+    expect(useProductsQuery).toHaveBeenCalledWith(
+      { ids: "p1,p2" },
+      expect.objectContaining({ skip: false }),
+    );
+  });
+
+  it("still shows a placeholder when the product has no photo either", () => {
+    catalogReturns([]);
+
+    renderList([item({ image: undefined })]);
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("applies the same fallback to the compact stack", () => {
+    catalogReturns([catalogProduct("p1", "https://ik/added-later.jpg")]);
+
+    render(<OrderItemStack items={[item({ image: undefined })]} />);
+
+    expect(screen.getByRole("img")).toHaveAttribute(
+      "src",
+      "https://ik/added-later.jpg",
+    );
   });
 });
