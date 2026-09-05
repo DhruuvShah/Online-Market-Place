@@ -1,16 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { BootScreen } from "@/components/ui/BootScreen";
 import type { Role } from "@/types";
-
-function Pending() {
-  return (
-    <div className="grid min-h-dvh place-items-center px-6">
-      <p className="text-[14px] text-ink-muted">
-        Waking up the marketplace…
-      </p>
-    </div>
-  );
-}
 
 function homeFor(role: Role | undefined) {
   return role === "seller" ? "/seller" : "/discover";
@@ -20,7 +11,7 @@ export function RequireRole({ roles }: { roles: Role[] }) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
 
-  if (isLoading) return <Pending />;
+  if (isLoading) return <BootScreen />;
 
   if (!isAuthenticated) {
     return (
@@ -38,7 +29,7 @@ export function RequireRole({ roles }: { roles: Role[] }) {
 export function RedirectIfAuthed() {
   const { user, isLoading, isAuthenticated } = useAuth();
 
-  if (isLoading) return <Pending />;
+  if (isLoading) return <BootScreen />;
   if (isAuthenticated) return <Navigate to={homeFor(user?.role)} replace />;
 
   return <Outlet />;
