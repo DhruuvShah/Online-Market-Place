@@ -96,6 +96,17 @@ module.exports = async function () {
     replicate(productModel),
   );
 
+  // Same upsert as a create: the payload is the whole product either way, so a
+  // rename, a price change or a new photo lands as a full replacement.
+  subscribeToQueue(
+    "PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED",
+    replicate(productModel),
+  );
+
+  subscribeToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED", async (doc) => {
+    await productModel.deleteOne({ _id: doc._id });
+  });
+
   subscribeToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", async (doc) => {
     await replicate(orderModel)(doc);
 

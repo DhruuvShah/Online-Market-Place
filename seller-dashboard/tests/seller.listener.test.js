@@ -33,6 +33,8 @@ describe("seller dashboard projection listeners", () => {
       "PAYMENT_SELLER_DASHBOARD.PAYMENT_CREATED",
       "PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATED",
       "PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED",
+      "PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED",
+      "PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED",
     ]);
   });
 
@@ -149,5 +151,101 @@ describe("seller dashboard projection listeners", () => {
     await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
 
     expect(await productModel.countDocuments({ _id: id })).toBe(1);
+  });
+
+  describe("catalog edits after creation", () => {
+    const seedProduct = async (overrides = {}) => {
+      const product = {
+        _id: new mongoose.Types.ObjectId().toHexString(),
+        title: "Aeron Chair",
+        price: { amount: 1000, currency: "INR" },
+        seller: new mongoose.Types.ObjectId().toHexString(),
+        stock: 5,
+        images: [],
+        ...overrides,
+      };
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
+      return product;
+    };
+
+    it("replicates newly uploaded images onto the projection", async () => {
+      const product = await seedProduct();
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED", {
+        ...product,
+        images: [
+          { url: "https://ik/a.jpg", thumbnail: "https://ik/a-t.jpg", id: "f1" },
+        ],
+      });
+
+      const stored = await productModel.findById(product._id);
+      expect(stored.images).toHaveLength(1);
+      expect(stored.images[0].thumbnail).toBe("https://ik/a-t.jpg");
+    });
+
+    it("replicates a removed image", async () => {
+      const product = await seedProduct({
+        images: [
+          { url: "https://ik/a.jpg", thumbnail: "https://ik/a-t.jpg", id: "f1" },
+        ],
+      });
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED", {
+        ...product,
+        images: [],
+      });
+
+      const stored = await productModel.findById(product._id);
+      expect(stored.images).toHaveLength(0);
+    });
+
+    it("replicates a renamed and repriced product", async () => {
+      const product = await seedProduct();
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED", {
+        ...product,
+        title: "Aeron Chair, Size B",
+        price: { amount: 2500, currency: "INR" },
+        stock: 12,
+      });
+
+      const stored = await productModel.findById(product._id);
+      expect(stored.title).toBe("Aeron Chair, Size B");
+      expect(stored.price.amount).toBe(2500);
+      expect(stored.stock).toBe(12);
+    });
+
+    it("creates the projection if an update arrives before its create", async () => {
+      const id = new mongoose.Types.ObjectId().toHexString();
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED", {
+        _id: id,
+        title: "Out of order",
+        price: { amount: 100, currency: "INR" },
+        seller: new mongoose.Types.ObjectId().toHexString(),
+        stock: 1,
+      });
+
+      expect(await productModel.findById(id)).not.toBeNull();
+    });
+
+    it("drops a deleted product from the projection", async () => {
+      const product = await seedProduct();
+
+      await emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED", {
+        _id: product._id,
+      });
+
+      expect(await productModel.findById(product._id)).toBeNull();
+    });
+
+    it("shrugs off a delete for something it never had", async () => {
+      const id = new mongoose.Types.ObjectId().toHexString();
+
+      await expect(
+        emit("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED", { _id: id }),
+      ).resolves.not.toThrow();
+    });
   });
 });

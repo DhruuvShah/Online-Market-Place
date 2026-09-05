@@ -11,6 +11,17 @@ jest.mock("../src/services/imagekit.service", () => ({
   deleteImage: (...args) => mockDeleteImage(...args),
 }));
 
+const mockPublish = jest.fn(async () => undefined);
+
+jest.mock("../src/broker/outbox", () => ({
+  publishToOutbox: (...args) => mockPublish(...args),
+  drainOutbox: jest.fn(),
+  startOutboxDrain: jest.fn(),
+}));
+
+const projected = (queue) =>
+  mockPublish.mock.calls.filter(([name]) => name === queue).map(([, payload]) => payload);
+
 const app = require("../src/app");
 const Product = require("../src/models/product.model");
 
@@ -237,6 +248,66 @@ describe("product image management", () => {
       expect(mockDeleteImage).toHaveBeenCalledWith("file_1");
       expect(mockDeleteImage).toHaveBeenCalledWith("file_2");
       expect(await Product.findById(product._id)).toBeNull();
+    });
+  });
+
+  describe("seller dashboard projection", () => {
+    it("announces the new photo so the inventory list is not stale", async () => {
+      mockUploadImage.mockResolvedValue({
+        url: "https://ik/b.jpg",
+        thumbnail: "https://ik/b-t.jpg",
+        id: "file_b",
+      });
+
+      const product = await seed();
+
+      await request(app)
+        .post(`/api/products/${product._id}/images`)
+        .set("Cookie", [`token=${token}`])
+        .attach("images", Buffer.from("x"), "b.jpg")
+        .expect(201);
+
+      const [payload] = projected("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED");
+      expect(payload.images).toHaveLength(2);
+      expect(payload.images[1].id).toBe("file_b");
+    });
+
+    it("announces a removed photo", async () => {
+      mockDeleteImage.mockResolvedValue(true);
+      const product = await seed();
+
+      await request(app)
+        .delete(`/api/products/${product._id}/images/file_a`)
+        .set("Cookie", [`token=${token}`])
+        .expect(200);
+
+      const [payload] = projected("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED");
+      expect(payload.images).toHaveLength(0);
+    });
+
+    it("announces a deletion so the product leaves the dashboard", async () => {
+      mockDeleteImage.mockResolvedValue(true);
+      const product = await seed();
+
+      await request(app)
+        .delete(`/api/products/${product._id}`)
+        .set("Cookie", [`token=${token}`])
+        .expect(200);
+
+      const [payload] = projected("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED");
+      expect(String(payload._id)).toBe(String(product._id));
+    });
+
+    it("says nothing when the write was refused", async () => {
+      const product = await seed({ seller: otherSellerId });
+
+      await request(app)
+        .post(`/api/products/${product._id}/images`)
+        .set("Cookie", [`token=${token}`])
+        .attach("images", Buffer.from("x"), "b.jpg")
+        .expect(403);
+
+      expect(projected("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED")).toHaveLength(0);
     });
   });
 });

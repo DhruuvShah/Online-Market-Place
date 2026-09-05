@@ -3,6 +3,12 @@ const { uploadImage, deleteImage } = require("../services/imagekit.service");
 const { publishToOutbox } = require("../broker/outbox");
 const mongoose = require("mongoose");
 
+// The seller dashboard keeps its own copy of the catalog. Every write has to
+// announce itself or that copy silently drifts: renamed products keep their old
+// title, new photos never appear, deleted ones linger.
+const projectProduct = (product) =>
+  publishToOutbox("PRODUCT_SELLER_DASHBOARD.PRODUCT_UPDATED", product);
+
 // Accepts multipart/form-data with fields: title, description, priceAmount, priceCurrency, images[] (files)
 async function createProduct(req, res) {
   try {
@@ -263,6 +269,8 @@ async function updateProduct(req, res) {
   }
 
   await product.save();
+  await projectProduct(product);
+
   return res.status(200).json({ message: "Product updated", product });
 }
 
@@ -290,6 +298,10 @@ async function deleteProduct(req, res) {
   await Promise.all(product.images.map((image) => deleteImage(image.id)));
 
   await productModel.findOneAndDelete({ _id: id });
+  await publishToOutbox("PRODUCT_SELLER_DASHBOARD.PRODUCT_DELETED", {
+    _id: product._id,
+  });
+
   return res.status(200).json({ message: "Product deleted" });
 }
 
@@ -430,6 +442,7 @@ async function addProductImages(req, res) {
 
   product.images.push(...images);
   await product.save();
+  await projectProduct(product);
 
   return res.status(201).json({ message: "Images added", product });
 }
@@ -452,6 +465,7 @@ async function deleteProductImage(req, res) {
 
   product.images = product.images.filter((item) => item.id !== imageId);
   await product.save();
+  await projectProduct(product);
 
   return res.status(200).json({ message: "Image deleted", product });
 }

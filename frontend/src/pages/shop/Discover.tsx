@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { useDebounced } from "@/hooks/useDebounced";
+import { pageFromParam, pageToParam } from "@/features/products/pageParam";
 import type { ProductSort } from "@/types";
 
 const PAGE_SIZE = 12;
@@ -38,7 +39,11 @@ export default function Discover() {
     return isSort(requested) ? requested : "relevance";
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(0);
+
+  // Seeded from the URL and written back to it, so returning from a product or
+  // reloading the tab lands on the page that was being read, not page one.
+  // The URL carries a 1-based page because that is what the pager shows.
+  const [page, setPage] = useState(() => pageFromParam(params.get("page")));
 
   const debouncedTerm = useDebounced(term, 350);
   const debouncedMin = useDebounced(minPrice, 500);
@@ -60,8 +65,17 @@ export default function Discover() {
     if (debouncedMax) next.set("maxprice", debouncedMax);
     if (inStockOnly) next.set("instock", "true");
     if (sort !== "relevance") next.set("sort", sort);
+    if (page > 0) next.set("page", pageToParam(page));
     setParams(next, { replace: true });
-  }, [debouncedTerm, debouncedMin, debouncedMax, inStockOnly, sort, setParams]);
+  }, [
+    debouncedTerm,
+    debouncedMin,
+    debouncedMax,
+    inStockOnly,
+    sort,
+    page,
+    setParams,
+  ]);
 
   const query = useMemo(
     () => ({
